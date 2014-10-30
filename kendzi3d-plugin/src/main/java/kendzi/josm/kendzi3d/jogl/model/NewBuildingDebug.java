@@ -84,7 +84,7 @@ public class NewBuildingDebug {
 
         float[] rgba = new float[4];
         // green
-        pGl.glColor3fv(Color.RED.darker().getRGBComponents(rgba), 0);
+        pGl.glColor3fv(Color.BLACK.darker().getRGBComponents(rgba), 0);
 
         if (this.debug != null && this.debug.getStartPoint() != null) {
 

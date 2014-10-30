@@ -25,6 +25,8 @@ public enum OsmAttributeKeys {
     BUILDING_FACADE_COLOUR("building:facade:colour"),
 
     BUILDING_COLOR("building:color"),
+    
+    COLOUR("colour"),
 
     BUILDING_COLOUR("building:colour"),
 
@@ -43,9 +45,13 @@ public enum OsmAttributeKeys {
     ROOF_ANGLE("roof:angle"),
 
     ROOF_HEIGHT("roof:height"),
-
+    
+    ROOF_TYPE_HEIGHT("roof:type:height"),
+    
     BUILDING_ROOF_HEIGHT("building:roof:height"),
 
+    BUILDING_ROOF_TYPE_HEIGHT("building:roof:type:height"),
+    
     ROOF_MATERIAL("roof:material"),
 
     ROOF_SLOPE_DIRECTION("roof:slope:direction"),
@@ -91,7 +97,7 @@ public enum OsmAttributeKeys {
     FENCE_TYPE("fence_type"),
 
     FENCE__TYPE("fence:type"),
-
+    
     ENTRANCE("entrance"),
 
     ROOF_EDGE("roof:edge"),
@@ -103,8 +109,6 @@ public enum OsmAttributeKeys {
     BUILDING_SHAPE("building:shape"),
 
     WALL("wall"),
-
-    COLOUR("colour"),
 
     COLOR("color"),
 

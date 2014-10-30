@@ -62,7 +62,8 @@ public class RoofType5v6 extends AbstractRoofTypeBuilder {
         if (isUnit(measurement, MeasurementUnit.DEGREES)) {
             angle = measurement.getValue();
         } else {
-            h1 = getHeightMeters(pRoof.getMeasurements(), MeasurementKey.HEIGHT_1, DEFAULT_ROOF_HEIGHT);
+            h1 = getHeightMeters(pRoof.getMeasurements(), MeasurementKey.HEIGHT_5, DEFAULT_ROOF_HEIGHT);
+            
         }
 
         RoofTypeOutput rto = build(polygon, h1, angle, roofTextureData);

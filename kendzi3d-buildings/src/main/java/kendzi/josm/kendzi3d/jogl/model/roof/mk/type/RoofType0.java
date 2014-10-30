@@ -36,6 +36,8 @@ import kendzi.math.geometry.polygon.split.SplitPolygons;
  */
 public abstract class RoofType0 extends RectangleRoofTypeBuilder {
 
+
+	
     /**
      * @return roof type.
      */

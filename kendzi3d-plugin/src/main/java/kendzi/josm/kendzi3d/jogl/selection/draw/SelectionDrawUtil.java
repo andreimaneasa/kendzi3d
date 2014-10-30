@@ -50,7 +50,6 @@ public class SelectionDrawUtil {
 
         drawEditors(gl, manager.getLastSelection(), manager.getLastActiveEditor(), camera);
 
-
     }
 
     private void drawEditors(GL2 gl, Selection selection, Editor activeEditor, Camera camera) {

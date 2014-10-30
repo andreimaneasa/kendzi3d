@@ -34,6 +34,11 @@ public enum MeasurementKey {
      * Height 4.
      */
     HEIGHT_4("3dr:height4"),
+    
+    /**
+     * Height 5.
+     */
+    HEIGHT_5("3dr:height5"),
 
     /**
      * Length 1.

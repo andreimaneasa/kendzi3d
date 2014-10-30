@@ -21,7 +21,10 @@ import kendzi.math.geometry.polygon.PolygonWithHolesList2d;
 public interface RoofTypeBuilder {
 
     public static double DEFAULT_ROOF_HEIGHT = 2.5d;
-
+    
+//    public void setHeight(Double height);    
+//
+//    public double getHeight();
     /**
      * Build roof from given roof parameters.
      * 

@@ -166,6 +166,29 @@ public abstract class ObjectSelectionManager extends ObjectSelectionListener {
 
         return selection;
     }
+    
+//    @Override
+//    protected Selection drop(int x, int y) {
+//
+//        Selection selection = null;
+//
+//        Ray3d selectRay = viewportPicking(x, y);
+//
+//        Editor activeEditor = selectActiveEditor(selectRay, this.lastSelection);
+//        if (activeEditor != null) {
+//            // activeEditor.select(true);
+//            // this.activeEditor = activeEditor;
+//
+//        } else {
+//
+//            selection = drop(selectRay);
+//        }
+//
+//        this.lastSelectRay = selectRay;
+//        this.lastSelection = selection;
+//
+//        return selection;
+//    }
 
     /**
      * @return the lastClosestPointOnBaseRay

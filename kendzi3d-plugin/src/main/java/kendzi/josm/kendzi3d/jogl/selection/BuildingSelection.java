@@ -10,6 +10,8 @@ package kendzi.josm.kendzi3d.jogl.selection;
 
 import javax.vecmath.Point3d;
 
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
+
 public abstract class BuildingSelection implements Selection {
 
     Point3d center;
@@ -18,13 +20,14 @@ public abstract class BuildingSelection implements Selection {
     long wayId;
 
 
-    public BuildingSelection(long wayId,   Point3d center, double radius) {
+	public BuildingSelection(long wayId,   Point3d center, double radius) {
         super();
         this.center = center;
         this.radius = radius;
         this.wayId = wayId;
     }
 
+	 
     @Override
     public Point3d getCenter() {
         return this.center;
@@ -34,16 +37,21 @@ public abstract class BuildingSelection implements Selection {
     public double getRadius() {
         return this.radius;
     }
+    
+    @Override
+    public long getWayId() {
+        return this.wayId;
+    }
 
     @Override
     public abstract void select(boolean selected);
 
-    /**
-     * @return the wayId
-     */
-    public long getWayId() {
-        return wayId;
-    }
+//    /**
+//     * @return the wayId
+//     */
+//    public long getWayId() {
+//        return wayId;
+//    }
 
     /**
      * @param wayId the wayId to set

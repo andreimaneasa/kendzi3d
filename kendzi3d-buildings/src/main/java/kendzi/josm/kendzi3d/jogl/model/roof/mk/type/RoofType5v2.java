@@ -42,7 +42,7 @@ public class RoofType5v2 extends RectangleRoofTypeBuilder {
     @Override
     public RoofTypeOutput buildRectangleRoof(RectangleRoofTypeConf conf) {
 
-        Double h1 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_1, conf.getRecHeight());
+        Double h1 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_5, conf.getRecHeight());
 
         return build(conf.getBuildingPolygon(), conf.getRecHeight(), conf.getRecWidth(), conf.getRectangleContur(), h1,
                 conf.getRoofTextureData());

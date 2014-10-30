@@ -8,32 +8,46 @@ package kendzi.josm.kendzi3d.jogl.model.roof.mk.type;
 
 import kendzi.josm.kendzi3d.jogl.model.roof.mk.RoofTypeOutput;
 import kendzi.josm.kendzi3d.jogl.model.roof.mk.measurement.MeasurementKey;
-
 /**
  * Roof type 0.1.
  * 
  * @author Tomasz Kędziora (Kendzi)
  * 
  */
-public class RoofType0v1 extends RoofType0 {
 
-    @Override
-    protected int getType() {
-        return 1;
-    }
+public  class RoofType0v1 extends RoofType0 {
+	//	double roofDimension;
+	
+	
+//	double numar ;
 
-    @Override
-    public RoofTypeOutput buildRectangleRoof(RectangleRoofTypeConf conf) {
+	@Override
+	protected int getType() {
+		return 1;
+	}
 
-        Double h1 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_1, 0.5d);
-        Double h2 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_2, 2.5d);
+	Double h2;
 
-        Double l1 = getLenghtMetersPersent(conf.getMeasurements(), MeasurementKey.LENGTH_1, conf.getRecHeight(),
-                conf.getRecHeight() / 3d);
+	@Override
+	public RoofTypeOutput buildRectangleRoof(RectangleRoofTypeConf conf) {
 
-        int type = getType();
+		Double h1 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_1, 0.5d);
+		
+//		if (conf.getMeasurements().get("HEIGHT_5") != null){
+//			h2 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_2, 2.5d);
+//		}else{
+			h2 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_5, 2.5d);
+//		}
 
-        return build(conf.getBuildingPolygon(), conf.getRecHeight(), conf.getRecWidth(), conf.getRectangleContur(), h1, h2, l1,
-                0, 0, 0, type, conf.getRoofTextureData());
-    }
+
+		Double l1 = getLenghtMetersPersent(conf.getMeasurements(), MeasurementKey.LENGTH_1, conf.getRecHeight(),
+				conf.getRecHeight() / 3d);
+
+		int type = getType();
+
+		return build(conf.getBuildingPolygon(), conf.getRecHeight(), conf.getRecWidth(), conf.getRectangleContur(), h1, h2, l1,
+				0, 0, 0, type, conf.getRoofTextureData());
+	}
+
+
 }

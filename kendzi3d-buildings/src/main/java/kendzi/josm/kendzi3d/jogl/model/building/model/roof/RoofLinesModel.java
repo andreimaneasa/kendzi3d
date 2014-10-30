@@ -5,6 +5,8 @@ import java.util.Map;
 
 import javax.vecmath.Point2d;
 
+import kendzi.josm.kendzi3d.jogl.model.roof.mk.type.RoofTypeBuilder;
+import kendzi.josm.kendzi3d.jogl.model.roof.mk.type.alias.RoofTypeAliasEnum;
 import kendzi.math.geometry.line.LineSegment2d;
 
 public class RoofLinesModel implements RoofModel {
@@ -64,4 +66,20 @@ public class RoofLinesModel implements RoofModel {
     public void setRoofHeight(double roofHeight) {
         this.roofHeight = roofHeight;
     }
+
+	@Override
+	public RoofTypeAliasEnum roofType() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+//	@Override
+//	public void setroofType(RoofTypeBuilder roofType) {
+//	}
+
+	@Override
+	public void setroofType(RoofTypeBuilder roofType) {
+		// TODO Auto-generated method stub
+		
+	}
 }

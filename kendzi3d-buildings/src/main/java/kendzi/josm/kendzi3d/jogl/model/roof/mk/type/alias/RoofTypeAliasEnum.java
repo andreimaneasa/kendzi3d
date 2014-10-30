@@ -12,71 +12,108 @@ package kendzi.josm.kendzi3d.jogl.model.roof.mk.type.alias;
  * 
  */
 public enum RoofTypeAliasEnum {
-    ROOF_TYPE0_0("0.0"), //
-    ROOF_TYPE0_1("0.1"), //
-    ROOF_TYPE0_2("0.2"), //
-    ROOF_TYPE0_3("0.3"), //
-    ROOF_TYPE0_4("0.4"), //
+	ROOF_TYPE0_0("0.0"), //
+	ROOF_TYPE0_1("0.1"), //
+	ROOF_TYPE0_2("0.2"), //
+	ROOF_TYPE0_3("0.3"), //
+	ROOF_TYPE0_4("0.4"), //
 
-    ROOF_TYPE1_0("1.0"), //
-    ROOF_TYPE1_1("1.1"), //
+	ROOF_TYPE1_0("1.0"), //
+	ROOF_TYPE1_1("1.1"), //
 
-    ROOF_TYPE2_0("2.0"), //
-    ROOF_TYPE2_1("2.1"), //
-    ROOF_TYPE2_2("2.2"), //
-    ROOF_TYPE2_3("2.3"), //
-    ROOF_TYPE2_4("2.4"), //
-    ROOF_TYPE2_5("2.5"), //
-    ROOF_TYPE2_6("2.6"), //
-    ROOF_TYPE2_7("2.7"), //
-    ROOF_TYPE2_8("2.8"), //
-    ROOF_TYPE2_9("2.9"), //
+	ROOF_TYPE2_0("2.0"), //
+	ROOF_TYPE2_1("2.1"), //
+	ROOF_TYPE2_2("2.2"), //
+	ROOF_TYPE2_3("2.3"), //
+	ROOF_TYPE2_4("2.4"), //
+	ROOF_TYPE2_5("2.5"), //
+	ROOF_TYPE2_6("2.6"), //
+	ROOF_TYPE2_7("2.7"), //
+	ROOF_TYPE2_8("2.8"), //
+	ROOF_TYPE2_9("2.9"), //
 
-    ROOF_TYPE3_0("3.0"), //
+	ROOF_TYPE3_0("3.0"), //
 
-    ROOF_TYPE4_0("4.0"), //
-    ROOF_TYPE4_2("4.2"), //
+	ROOF_TYPE4_0("4.0"), //
+	ROOF_TYPE4_1("4.1"), //adaugata de mine 12 aug nu merge... cred ca nu e implementata forma 
+	ROOF_TYPE4_2("4.2"), //
 
-    ROOF_TYPE5_0("5.0"), //
-    ROOF_TYPE5_2("5.2"), //
-    ROOF_TYPE5_6("5.6"), //
-    ROOF_TYPE8_0("8.0"), //
-    ROOF_TYPE9_0("9.0"), //
+	ROOF_TYPE5_0("5.0"), //
+	ROOF_TYPE5_2("5.2"), //
+	ROOF_TYPE5_6("5.6"), //
+	ROOF_TYPE8_0("8.0"), //
+	ROOF_TYPE9_0("9.0"), //
 
-    FLAT("flat"), //
-    GABLED("gabled"), //
-    GAMBREL("gambrel"), //
-    MANSARD("mansard"), //
+	// 0.* type
+	FLAT("flat"), //
+	FLAT_SIMPLE_TERRACED("flat simple terraced"),
+	FLAT_DOUBLE_TERRACED("flat double terraced"),
+	FLAT_TRIPLE_TERRACED("flat triple terraced"),
+	FLAT_TERRACED("flat terraced"),
 
-    HALF_HIPPED("half hipped"), //
-    HIPPED("hipped"), //
-    SQUARE_HIPPED("square hipped"), //
-    COMPLEX_HIPPED("complex hipped"), //
+	// 1.* type    
+	SKILLION("skillion"), //
+	SKILLION_DIAGONALLY("skillion diagonally"), //
 
-    PITCHED("pitched"), //
-    PYRAMIDAL("pyramidal"), //
-    SQUARE_PYRAMIDAL("square pyramidal"), //
-    TENTED("tented"), //
+	// 2.* type
+	GABLED("gabled"), //
+	GABLED_HEIGHT_MOVED("gabled height moved"), //
+	SIDE_HIPPED("side hipped"),
+	HIPPED("hipped"),
+	PYRAMIDAL("pyramidal"),
+	DOUBLE_SKILLION("double skillion"),
+	TRIPLE_SKILLION("triple skillion"),
+	DIAGONAL_PASS("diagonal pass"),
+	DIAGONAL_PASS_2("diagonal pass 2"),
 
-    SKILLION("skillion"), //
-    DOME("dome"), //
-    ONION("onion"), //
-    HALF_ROUND("half round"), //
-    ROUND("round"), //
-    SALTBOX("saltbox"), //
-    ;
+	// 3.* type
+	HALF_SALTBOX("half saltbox"),
 
-    private String key;
+	// 4.* type
+	GAMBREL("gambrel"), //
+	MANSARD("mansard"), //
 
-    private RoofTypeAliasEnum(String pKey) {
-        this.key = pKey;
-    }
+	// 5.* type
+	ROUND("round"), //
+	ROUND_HIPPED("round hipped"), //
 
-    /**
-     * @return the key
-     */
-    public String getKey() {
-        return this.key;
-    }
+	// 8.* type
+	CONE("cone"), //
+
+	// 9.* type
+	EQUAL_HIPPED("equal hipped"), //
+
+
+	HALF_HIPPED("half hipped"), //
+	SQUARE_HIPPED("square hipped"), //
+	COMPLEX_HIPPED("complex hipped"), //
+
+	PITCHED("pitched"), //
+	SQUARE_PYRAMIDAL("square pyramidal"), //
+	TENTED("tented"), //
+
+
+	DOME("dome"), //
+	ONION("onion"), //
+	HALF_ROUND("half round"), //
+
+	SALTBOX("saltbox"), //
+	
+	
+	HIPPEDDDD("hipped"),
+	;
+
+	private String key;
+
+	private RoofTypeAliasEnum(String pKey) {
+		this.key = pKey;
+	}
+
+	/**
+	 * @return the key
+	 */
+	public String getKey() {
+		return this.key;
+	}
 
 }

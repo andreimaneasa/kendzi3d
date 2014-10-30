@@ -45,7 +45,7 @@ public class RoofType3v0 extends RectangleRoofTypeBuilder {
 
         Double h1 = getHeightDegreesMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_1, 0, l1, 60);
 
-        Double h2 = getHeightDegreesMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_2, 0, conf.getRecHeight() - l1, 10);
+        Double h2 = getHeightDegreesMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_5, 0, conf.getRecHeight() - l1, 10);
 
         return build(conf.getBuildingPolygon(), conf.getRecHeight(), conf.getRecWidth(), conf.getRectangleContur(), h1, h2, l1,
                 conf.getRoofTextureData());

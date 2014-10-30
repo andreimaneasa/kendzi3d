@@ -3,6 +3,8 @@ package kendzi.josm.kendzi3d.jogl.model.building.model;
 import java.awt.Color;
 import java.util.List;
 
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
+
 import kendzi.josm.kendzi3d.jogl.model.building.model.roof.RoofModel;
 
 public class BuildingPart {
@@ -28,8 +30,19 @@ public class BuildingPart {
     private String floorMaterialType;
 
     private Color facadeColor;
+    
+    // creata ca sa pot prelua osm Primitive pt fiecare building
+    private OsmPrimitive osmPrimitive;
 
-    private Color roofColor;
+    public OsmPrimitive getOsmPrimitive() {
+		return osmPrimitive;
+	}
+
+	public void setOsmPrimitive(OsmPrimitive osmPrimitive) {
+		this.osmPrimitive = osmPrimitive;
+	}
+
+	private Color roofColor;
 
     private Color floorColor;
 

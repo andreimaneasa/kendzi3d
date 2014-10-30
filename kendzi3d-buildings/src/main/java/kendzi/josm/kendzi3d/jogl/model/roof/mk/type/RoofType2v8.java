@@ -41,7 +41,7 @@ public class RoofType2v8 extends RectangleRoofTypeBuilder {
     public RoofTypeOutput buildRectangleRoof(RectangleRoofTypeConf conf) {
 
         Double h1 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_1, 2.5d);
-        Double h2 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_2, h1);
+        Double h2 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_5, h1);
 
         double middleLineHeight = getMiddleLineHeight(h1, h2);
 
