@@ -15,95 +15,100 @@ package kendzi.josm.kendzi3d.jogl.model.roof.mk.measurement;
  */
 public enum MeasurementKey {
 
-    /**
-     * Height 1.
-     */
-    HEIGHT_1("3dr:height1"),
+	/**
+	 * Height 1.
+	 */
+	HEIGHT_1("3dr:height1"),
 
-    /**
-     * Height 2.
-     */
-    HEIGHT_2("3dr:height2"),
+	/**
+	 * Height 2.
+	 */
+	HEIGHT_2("3dr:height2"),
 
-    /**
-     * Height 3.
-     */
-    HEIGHT_3("3dr:height3"),
+	/**
+	 * Height 3.
+	 */
+	HEIGHT_3("3dr:height3"),
 
-    /**
-     * Height 4.
-     */
-    HEIGHT_4("3dr:height4"),
+	/**
+	 * Height 4.
+	 */
+	HEIGHT_4("3dr:height4"),
 
-    /**
-     * Length 1.
-     */
-    LENGTH_1("3dr:length1"),
+	/**
+	 * Height 5.
+	 */
+	HEIGHT_5("3dr:height5"),
 
-    /**
-     * Lenght 2.
-     */
-    LENGTH_2("3dr:length2"),
+	/**
+	 * Length 1.
+	 */
+	LENGTH_1("3dr:length1"),
 
-    /**
-     * Lenght 3.
-     */
-    LENGTH_3("3dr:length3"),
+	/**
+	 * Lenght 2.
+	 */
+	LENGTH_2("3dr:length2"),
 
-    /**
-     * Lenght 4.
-     */
-    LENGTH_4("3dr:length4"),
+	/**
+	 * Lenght 3.
+	 */
+	LENGTH_3("3dr:length3"),
 
-    /**
-     * Dormer height 1.
-     */
-    DORMER_HEIGHT_1("3dr:dormer:height1"),
+	/**
+	 * Lenght 4.
+	 */
+	LENGTH_4("3dr:length4"),
 
-    /**
-     * Dormer height 2.
-     */
-     DORMER_HEIGHT_2("3dr:dormer:height2"),
+	/**
+	 * Dormer height 1.
+	 */
+	DORMER_HEIGHT_1("3dr:dormer:height1"),
 
-    /**
-     * Dormer height 3.
-     */
-    DORMER_HEIGHT_3("3dr:dormer:height3"),
+	/**
+	 * Dormer height 2.
+	 */
+	DORMER_HEIGHT_2("3dr:dormer:height2"),
 
-    /**
-     * Dormer width 1.
-     */
-    DORMER_WIDTH_1("3dr:dormer:width1"),
+	/**
+	 * Dormer height 3.
+	 */
+	DORMER_HEIGHT_3("3dr:dormer:height3"),
 
-    /**
-     * Dormer width 2.
-     */
-    DORMER_WIDTH_2("3dr:dormer:width2"),
+	/**
+	 * Dormer width 1.
+	 */
+	DORMER_WIDTH_1("3dr:dormer:width1"),
 
-    /**
-     * Dormer width 3.
-     */
-    DORMER_WIDTH_3("3dr:dormer:width3");
+	/**
+	 * Dormer width 2.
+	 */
+	DORMER_WIDTH_2("3dr:dormer:width2"),
 
-    /**
-     * Key value.
-     */
-    private String key;
+	/**
+	 * Dormer width 3.
+	 */
+	DORMER_WIDTH_3("3dr:dormer:width3");
 
-    /** Constructor for enum.
-     * @param pKey key value
-     */
-    private MeasurementKey(String pKey) {
+	/**
+	 * Key value.
+	 */
+	private String key;
 
-        this.key = pKey;
+	/** Constructor for enum.
+	 * @param pKey key value
+	 */
+	private MeasurementKey(String pKey) {
 
-    }
+		this.key = pKey;
 
-    /**
-     * @return the key
-     */
-    public String getKey() {
-        return this.key;
-    }
+	}
+
+	/**
+	 * @return the key
+	 */
+	public String getKey() {
+		return this.key;
+	}
 
 }

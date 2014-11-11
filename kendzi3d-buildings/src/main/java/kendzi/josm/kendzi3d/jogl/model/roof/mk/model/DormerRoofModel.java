@@ -7,14 +7,22 @@ import kendzi.josm.kendzi3d.jogl.model.building.model.roof.RoofModel;
 import kendzi.josm.kendzi3d.jogl.model.building.model.roof.RoofOrientation;
 import kendzi.josm.kendzi3d.jogl.model.roof.mk.measurement.Measurement;
 import kendzi.josm.kendzi3d.jogl.model.roof.mk.measurement.MeasurementKey;
+import kendzi.josm.kendzi3d.jogl.model.roof.mk.type.RoofTypeBuilder;
 import kendzi.josm.kendzi3d.jogl.model.roof.mk.type.alias.RoofTypeAliasEnum;
 
 public class DormerRoofModel implements RoofModel {
 
     // Roof Type
     RoofTypeAliasEnum roofType;
+    
+    RoofTypeBuilder roofTypeBuilder;
 
-    Integer roofTypeParameter;
+    public RoofTypeBuilder getRoofTypeBuilder() {
+		return roofTypeBuilder;
+	}
+
+
+	Integer roofTypeParameter;
 
     // starting point ?
 
@@ -71,11 +79,6 @@ public class DormerRoofModel implements RoofModel {
     public void setDirection(RoofFrontDirection direction) {
         this.direction = direction;
     }
-
-
-
-
-
 
 
 
@@ -229,6 +232,16 @@ public class DormerRoofModel implements RoofModel {
     }
 
 
+	@Override
+	public RoofTypeAliasEnum roofType() {
+	
+		return this.roofType;
+	}
 
 
+	@Override
+	public void setroofType(RoofTypeBuilder roofType) {
+		 this.roofTypeBuilder= roofType;
+		
+	}
 }

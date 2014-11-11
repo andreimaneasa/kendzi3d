@@ -29,7 +29,7 @@ public class Parser {
 
 
         for (RoofTypeAliasEnum type : RoofTypeAliasEnum.values()) {
-            if (name.startsWith(type.getKey())) {
+            if (name.equals(type.getKey())) {
                 return type;
             }
         }

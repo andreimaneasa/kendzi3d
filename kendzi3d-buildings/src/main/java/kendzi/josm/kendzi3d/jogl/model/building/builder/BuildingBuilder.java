@@ -20,6 +20,8 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector2d;
 import javax.vecmath.Vector3d;
 
+import org.apache.log4j.Logger;
+
 import kendzi.jogl.model.factory.FaceFactory;
 import kendzi.jogl.model.factory.FaceFactory.FaceType;
 import kendzi.jogl.model.factory.MaterialFactory;
@@ -67,830 +69,834 @@ import kendzi.math.geometry.polygon.split.PolygonSplitUtil;
  */
 public class BuildingBuilder {
 
-    /**
-     * Build 3d Model of building.
-     *
-     * @param buildingModel building model
-     * @param tm texture manager
-     * @return building model and debug informations
-     */
-    public static BuildingOutput buildModel(BuildingModel buildingModel, BuildingElementsTextureManager tm) {
+	private static final Logger log = Logger.getLogger(BuildingBuilder.class);
 
-        List<BuildingPartOutput> partsOut = new ArrayList<BuildingPartOutput>();
 
-        ModelFactory mf = ModelFactory.modelBuilder();
+	/**
+	 * Build 3d Model of building.
+	 *
+	 * @param buildingModel building model
+	 * @param tm texture manager
+	 * @return building model and debug informations
+	 */
+	public static BuildingOutput buildModel(BuildingModel buildingModel, BuildingElementsTextureManager tm) {
 
-        if (buildingModel.getParts() != null) {
+		List<BuildingPartOutput> partsOut = new ArrayList<BuildingPartOutput>();
 
-            for (BuildingPart bp : buildingModel.getParts()) {
+		ModelFactory mf = ModelFactory.modelBuilder();
 
-                partsOut.add(buildPart(bp, buildingModel, mf, tm));
-            }
-        }
+		if (buildingModel.getParts() != null) {
 
-        if (buildingModel.getNodeParts() != null) {
 
-            for (NodeBuildingPart bp : buildingModel.getNodeParts()) {
-                partsOut.add(builNodePart(bp, buildingModel, mf, tm));
-            }
-        }
+			for (BuildingPart bp : buildingModel.getParts()) {
 
-        BuildingOutput out = new BuildingOutput();
-        out.setModel(mf.toModel());
-        out.setBuildingPartOutput(partsOut);
-        return out;
-    }
+				partsOut.add(buildPart(bp, buildingModel, mf, tm));
+			}
+		}
 
-    private static boolean isWallCounterClockwise(Wall wall) {
-        PolygonList2d wallToPolygon = BuildingUtil.wallToOuterPolygon(wall);
+		if (buildingModel.getNodeParts() != null) {
 
-        if (0.0f < Triangulate.area(wallToPolygon.getPoints())) {
-            return true;
-        }
-        return false;
-    }
+			for (NodeBuildingPart bp : buildingModel.getNodeParts()) {
+				partsOut.add(builNodePart(bp, buildingModel, mf, tm));
+			}
+		}
 
-    private static BuildingPartOutput builNodePart(NodeBuildingPart bp, BuildingModel buildingModel, ModelFactory mf,
-            BuildingElementsTextureManager tm) {
+		BuildingOutput out = new BuildingOutput();
+		out.setModel(mf.toModel());
+		out.setBuildingPartOutput(partsOut);
+		return out;
+	}
 
-        if (bp instanceof SphereNodeBuildingPart) {
-            Color floorColor = takeFacadeColor(buildingModel, bp, tm);
-            TextureData floorTD = takeFacadeTextureData(buildingModel, bp, tm, floorColor != null);
+	private static boolean isWallCounterClockwise(Wall wall) {
+		PolygonList2d wallToPolygon = BuildingUtil.wallToOuterPolygon(wall);
 
-            String tex0Key = floorTD.getTex0();
-            Material mat = MaterialFactory.createTextureColorMaterial(tex0Key, floorColor);
+		if (0.0f < Triangulate.area(wallToPolygon.getPoints())) {
+			return true;
+		}
+		return false;
+	}
 
+	private static BuildingPartOutput builNodePart(NodeBuildingPart bp, BuildingModel buildingModel, ModelFactory mf,
+			BuildingElementsTextureManager tm) {
 
-            MeshFactory mesh = mf.addMesh("NodePart");
-            mesh.hasTexture = true;
-            mesh.materialID = mf.cacheMaterial(mat);
+		if (bp instanceof SphereNodeBuildingPart) {
+			Color floorColor = takeFacadeColor(buildingModel, bp, tm);
+			TextureData floorTD = takeFacadeTextureData(buildingModel, bp, tm, floorColor != null);
 
-            SphereNodeBuildingPart sphere = (SphereNodeBuildingPart) bp;
-            int pIcross = 12;
-            int icross = pIcross  + 1;
+			String tex0Key = floorTD.getTex0();
+			Material mat = MaterialFactory.createTextureColorMaterial(tex0Key, floorColor);
 
-            double height = sphere.getHeight();
-            double radius = sphere.getRadius();
-            Point2d point = sphere.getPoint();
 
-            // create cross section
-            Point2d [] crossSection = new Point2d[icross];
-            for (int i = 0; i < icross; i++) {
-                double a = Math.toRadians(180) / (icross - 1) * i - Math.toRadians(90);
+			MeshFactory mesh = mf.addMesh("NodePart");
+			mesh.hasTexture = true;
+			mesh.materialID = mf.cacheMaterial(mat);
 
-                crossSection[i] = new Point2d(Math.cos(a) * radius, Math.sin(a) * radius + height);
-            }
+			SphereNodeBuildingPart sphere = (SphereNodeBuildingPart) bp;
+			int pIcross = 12;
+			int icross = pIcross  + 1;
 
-            int pIsection = 12;
-            RoofType5v6.buildRotaryShape(mesh, point, pIsection, crossSection, true);
+			double height = sphere.getHeight();
+			double radius = sphere.getRadius();
+			Point2d point = sphere.getPoint();
 
-        }
-        return new BuildingPartOutput();
-    }
+			// create cross section
+			Point2d [] crossSection = new Point2d[icross];
+			for (int i = 0; i < icross; i++) {
+				double a = Math.toRadians(180) / (icross - 1) * i - Math.toRadians(90);
 
-    private static BuildingPartOutput buildPart(BuildingPart bp, BuildingModel buildingModel, ModelFactory mf,
-            BuildingElementsTextureManager tm) {
+				crossSection[i] = new Point2d(Math.cos(a) * radius, Math.sin(a) * radius + height);
+			}
 
-        BuildingPartOutput partOutput = new BuildingPartOutput();
+			int pIsection = 12;
+			RoofType5v6.buildRotaryShape(mesh, point, pIsection, crossSection, true);
 
-        CatchFaceFactory catchFaceFactory = new CatchFaceFactory(mf);
+		}
+		return new BuildingPartOutput();
+	}
 
-        Wall w = bp.getWall();
+	private static BuildingPartOutput buildPart(BuildingPart bp, BuildingModel buildingModel, ModelFactory mf,
+			BuildingElementsTextureManager tm) {
 
-        boolean cc = isWallCounterClockwise(w);
+		BuildingPartOutput partOutput = new BuildingPartOutput();
 
-        double maxHeight = bp.getDefaultMaxHeight();
+		CatchFaceFactory catchFaceFactory = new CatchFaceFactory(mf);
 
+		Wall w = bp.getWall();
 
-        double minHeight = bp.getDefaultMinHeight();
+		boolean cc = isWallCounterClockwise(w);
 
-        WallPart firstWallPart = getFirstWallPart(w);
-        Color facadeColor = takeFacadeColor(buildingModel, bp, w, firstWallPart, tm);
-        Color roofColor = takeRoofColor(buildingModel, bp, w, firstWallPart, tm);
-        TextureData roofTextureData = takeRoofTextureData(buildingModel, bp, w, tm, roofColor != null);
-        //XXX
-        TextureData facadeTextureData = takeFacadeTextureData(buildingModel, bp, w, firstWallPart, tm, facadeColor != null);
-
+		double maxHeight = bp.getDefaultMaxHeight();
 
-        RoofOutput roofOutput = buildRoof(bp, mf, maxHeight, facadeColor, roofColor, facadeTextureData, roofTextureData);
-
-        double wallHeight = maxHeight - roofOutput.getHeight();
 
-        buildWall(w, cc, minHeight, wallHeight, bp, buildingModel, mf, catchFaceFactory, tm);
+		double minHeight = bp.getDefaultMinHeight();
 
-        buildFloor(bp, buildingModel, mf, tm, roofTextureData, facadeColor, minHeight);
+		WallPart firstWallPart = getFirstWallPart(w);
+		Color facadeColor = takeFacadeColor(buildingModel, bp, w, firstWallPart, tm);
+		Color roofColor = takeRoofColor(buildingModel, bp, w, firstWallPart, tm);
+		TextureData roofTextureData = takeRoofTextureData(buildingModel, bp, w, tm, roofColor != null);
+		//XXX
+		TextureData facadeTextureData = takeFacadeTextureData(buildingModel, bp, w, firstWallPart, tm, facadeColor != null);
+
 
-        if (bp.getInlineWalls() != null) {
-            for (Wall in : bp.getInlineWalls()) {
-                boolean ccc = isWallCounterClockwise(w);
+		RoofOutput roofOutput = buildRoof(bp, mf, maxHeight, facadeColor, roofColor, facadeTextureData, roofTextureData);
+
+		double wallHeight = maxHeight - roofOutput.getHeight();
 
-                buildWall(in, ccc, minHeight, wallHeight, bp, buildingModel, mf, catchFaceFactory, tm);
-            }
-        }
+		buildWall(w, cc, minHeight, wallHeight, bp, buildingModel, mf, catchFaceFactory, tm);
 
-        partOutput.setRoofDebugOut(roofOutput.getDebug());
-        partOutput.setEdges(roofOutput.getEdges());
-        // partOutput.setFirstPoint(getFirstWallPoint(w));
+		buildFloor(bp, buildingModel, mf, tm, roofTextureData, facadeColor, minHeight);
 
-        return partOutput;
-    }
+		if (bp.getInlineWalls() != null) {
+			for (Wall in : bp.getInlineWalls()) {
+				boolean ccc = isWallCounterClockwise(w);
 
-    /**
-     * @param bp
-     * @param mf
-     * @param maxHeight
-     * @param facadeColor
-     * @param roofColor
-     * @param facadeTextureData
-     * @param roofTextureData
-     * @return
-     */
-    private static RoofOutput buildRoof(BuildingPart bp, ModelFactory mf, double maxHeight, Color facadeColor, Color roofColor,
-            TextureData facadeTextureData, TextureData roofTextureData) {
-        RoofTextureData rtd = new RoofTextureData();
-        // XXX fix, currently roof builder support only one texture, fix before roof builder is changed.
+				buildWall(in, ccc, minHeight, wallHeight, bp, buildingModel, mf, catchFaceFactory, tm);
+			}
+		}
 
-        rtd.setFacadeColor(facadeColor);
-        rtd.setFacadeTexture(facadeTextureData);
-        rtd.setRoofColor(roofColor);
-        rtd.setRoofTexture(roofTextureData);
-        RoofOutput roofOutput = null;
-        if (bp.getRoof() instanceof DormerRoofModel) {
-            roofOutput = DormerRoofBuilder.build(bp, maxHeight, mf, rtd);
+		partOutput.setRoofDebugOut(roofOutput.getDebug());
+		partOutput.setEdges(roofOutput.getEdges());
+		// partOutput.setFirstPoint(getFirstWallPoint(w));
 
-        } else if (bp.getRoof() instanceof RoofLinesModel) {
-            roofOutput = RoofLinesBuildier.build(bp, maxHeight, mf, roofTextureData, roofColor);
-        } else {
-            throw new RuntimeException();
-        }
-        return roofOutput;
-    }
+		return partOutput;
+	}
 
-    private static void buildFloor(BuildingPart bp, BuildingModel buildingModel, ModelFactory mf,
-            BuildingElementsTextureManager tm, TextureData roofTextureData, Color facadeColor, double minHeight) {
-        Color floorColor = takeFloorColor(buildingModel, bp, tm);
-        TextureData floorTD = takeFloorTextureData(buildingModel, bp, tm, floorColor != null);
+	/**
+	 * @param bp
+	 * @param mf
+	 * @param maxHeight
+	 * @param facadeColor
+	 * @param roofColor
+	 * @param facadeTextureData
+	 * @param roofTextureData
+	 * @return
+	 */
+	private static RoofOutput buildRoof(BuildingPart bp, ModelFactory mf, double maxHeight, Color facadeColor, Color roofColor,
+			TextureData facadeTextureData, TextureData roofTextureData) {
+		RoofTextureData rtd = new RoofTextureData();
+		// XXX fix, currently roof builder support only one texture, fix before roof builder is changed.
 
-        String tex0Key = floorTD.getTex0();
-        Material mat = MaterialFactory.createTextureColorMaterial(tex0Key, floorColor);
+		rtd.setFacadeColor(facadeColor);
+		rtd.setFacadeTexture(facadeTextureData);
+		rtd.setRoofColor(roofColor);
+		rtd.setRoofTexture(roofTextureData);
+		RoofOutput roofOutput = null;
+		if (bp.getRoof() instanceof DormerRoofModel) {
+			roofOutput = DormerRoofBuilder.build(bp, maxHeight, mf, rtd);
 
+		} else if (bp.getRoof() instanceof RoofLinesModel) {
+			roofOutput = RoofLinesBuildier.build(bp, maxHeight, mf, roofTextureData, roofColor);
+		} else {
+			throw new RuntimeException();
+		}
+		return roofOutput;
+	}
 
-        MeshFactory mesh = mf.addMesh("FloorPart");
-        mesh.hasTexture = true;
-        mesh.materialID = mf.cacheMaterial(mat);
+	private static void buildFloor(BuildingPart bp, BuildingModel buildingModel, ModelFactory mf,
+			BuildingElementsTextureManager tm, TextureData roofTextureData, Color facadeColor, double minHeight) {
+		Color floorColor = takeFloorColor(buildingModel, bp, tm);
+		TextureData floorTD = takeFloorTextureData(buildingModel, bp, tm, floorColor != null);
 
-        PolygonWithHolesList2d buildingPolygon = BuildingUtil.buildingPartToPolygonWithHoles(bp);
-        MeshFactoryUtil.addPolygonWithHolesInYRevert(buildingPolygon, minHeight, mesh, roofTextureData, 0, 0, new Vector3d(1, 0, 0));
-    }
+		String tex0Key = floorTD.getTex0();
+		Material mat = MaterialFactory.createTextureColorMaterial(tex0Key, floorColor);
 
-    private static Point2d getFirstWallPoint(Wall w) {
-        WallPart firstWallPart = getFirstWallPart(w);
 
-        if (firstWallPart != null
-                && firstWallPart.getNodes() != null
-                && firstWallPart.getNodes().size() > 0) {
-            return firstWallPart.getNodes().get(0).getPoint();
-        }
+		MeshFactory mesh = mf.addMesh("FloorPart");
+		mesh.hasTexture = true;
+		mesh.materialID = mf.cacheMaterial(mat);
 
-        return null;
-    }
+		PolygonWithHolesList2d buildingPolygon = BuildingUtil.buildingPartToPolygonWithHoles(bp);
+		MeshFactoryUtil.addPolygonWithHolesInYRevert(buildingPolygon, minHeight, mesh, roofTextureData, 0, 0, new Vector3d(1, 0, 0));
+	}
 
-    private static WallPart getFirstWallPart(Wall w) {
+	private static Point2d getFirstWallPoint(Wall w) {
+		WallPart firstWallPart = getFirstWallPart(w);
 
-        if (w == null) {
-            return null;
-        }
+		if (firstWallPart != null
+				&& firstWallPart.getNodes() != null
+				&& firstWallPart.getNodes().size() > 0) {
+			return firstWallPart.getNodes().get(0).getPoint();
+		}
 
-        if (w.getWallParts() != null && w.getWallParts().size() > 0) {
-            return w.getWallParts().get(0);
-        }
+		return null;
+	}
 
-        return null;
-    }
+	private static WallPart getFirstWallPart(Wall w) {
 
-    private static void buildWall(Wall w, boolean counterClockwise, double minHeight, double wallHeight, BuildingPart bp,
-            BuildingModel buildingModel, ModelFactory mf, CatchFaceFactory catchFaceFactory, BuildingElementsTextureManager tm) {
+		if (w == null) {
+			return null;
+		}
 
-        int wpCount = -1;
-        for (WallPart wp : w.getWallParts()) {
-            wpCount++;
+		if (w.getWallParts() != null && w.getWallParts().size() > 0) {
+			return w.getWallParts().get(0);
+		}
 
+		return null;
+	}
 
-            double wallLength = calcWallPartLength(wp);
+	private static void buildWall(Wall w, boolean counterClockwise, double minHeight, double wallHeight, BuildingPart bp,
+			BuildingModel buildingModel, ModelFactory mf, CatchFaceFactory catchFaceFactory, BuildingElementsTextureManager tm) {
 
-            List<WallNode> nodes = wp.getNodes();
-            int size = nodes.size();
+		int wpCount = -1;
+		for (WallPart wp : w.getWallParts()) {
+			wpCount++;
 
-            Color facadeColor = takeFacadeColor(buildingModel, bp, w, wp, tm);
-            TextureData facadeTD = takeFacadeTextureData(buildingModel, bp, w, wp, tm, facadeColor != null);
 
-            String tex0Key = facadeTD.getTex0();
-            Material mat = MaterialFactory.createTextureColorMaterial(tex0Key, facadeColor);
+			double wallLength = calcWallPartLength(wp);
 
-            if (facadeTD.getTex1() != null) {
-                mat.getTexturesComponent().add(facadeTD.getTex1());
-            }
+			List<WallNode> nodes = wp.getNodes();
+			int size = nodes.size();
 
-            Integer windowsCols = hasWindowsCloumns(wp.getBuildingElements());
-            //windowsCols = 0;
-            boolean isWindows = windowsCols != null && windowsCols != 0;
-            TextureData windowsTexture = null;
-            if (isWindows) {
+			Color facadeColor = takeFacadeColor(buildingModel, bp, w, wp, tm);
+			TextureData facadeTD = takeFacadeTextureData(buildingModel, bp, w, wp, tm, facadeColor != null);
 
-                TextureData windowsTD = takeWindowsColumnsTextureData(buildingModel, bp, w, wp, tm);
-                if (windowsTD.getTex0() != null) {
-                    mat.getTexturesComponent().add(windowsTD.getTex0());
-                }
+			String tex0Key = facadeTD.getTex0();
+			Material mat = MaterialFactory.createTextureColorMaterial(tex0Key, facadeColor);
 
+			if (facadeTD.getTex1() != null) {
+				mat.getTexturesComponent().add(facadeTD.getTex1());
+			}
 
-                double windowsSegmetLength = wallLength / (double)windowsCols;
+			Integer windowsCols = hasWindowsCloumns(wp.getBuildingElements());
+			//windowsCols = 0;
+			boolean isWindows = windowsCols != null && windowsCols != 0;
+			TextureData windowsTexture = null;
+			if (isWindows) {
 
-                int facadeLevels = getFacadeLevels(w, bp);
-                double windowsSegmentHeight = (wallHeight - minHeight) / facadeLevels;
+				TextureData windowsTD = takeWindowsColumnsTextureData(buildingModel, bp, w, wp, tm);
+				if (windowsTD.getTex0() != null) {
+					mat.getTexturesComponent().add(windowsTD.getTex0());
+				}
 
 
-                windowsTexture = new TextureData(null, windowsSegmetLength, windowsSegmentHeight);
+				double windowsSegmetLength = wallLength / (double)windowsCols;
 
+				int facadeLevels = getFacadeLevels(w, bp);
+				double windowsSegmentHeight = (wallHeight - minHeight) / facadeLevels;
 
-            }
 
-            MeshFactory mesh = mf.addMesh("WallPart: " + wpCount);
-            mesh.hasTexture = true;
-            mesh.materialID = mf.cacheMaterial(mat);
+				windowsTexture = new TextureData(null, windowsSegmetLength, windowsSegmentHeight);
 
-            boolean isOverLayer = facadeTD.getTex1() != null;
 
-            int texNum = 1 + (isOverLayer ? 1 : 0) + (isWindows ? 1 : 0);
+			}
 
-            FaceFactory face = mesh.addFace(FaceType.QUADS, texNum);
+			MeshFactory mesh = mf.addMesh("WallPart: " + wpCount);
+			mesh.hasTexture = true;
+			mesh.materialID = mf.cacheMaterial(mat);
 
-            double wallDistance = 0;
+			boolean isOverLayer = facadeTD.getTex1() != null;
 
-            for (int i = 0; i < size - 1; i++) {
-                WallNode n1 = nodes.get(i);
-                WallNode n2 = nodes.get((i + 1) % size);
+			int texNum = 1 + (isOverLayer ? 1 : 0) + (isWindows ? 1 : 0);
 
-                //List<WallHole> holesEnd = createEndHoles(n2);
+			FaceFactory face = mesh.addFace(FaceType.QUADS, texNum);
 
-                Point2d start = n1.getPoint();
-                double segmentDistance = n1.getPoint().distance(n2.getPoint());
-                Vector2d direction = new Vector2d(n2.getPoint());
-                direction.sub(n1.getPoint());
-                direction.normalize();
+			double wallDistance = 0;
 
-                // List<WallHole> holes = createHoles(n1);
+			for (int i = 0; i < size - 1; i++) {
+				WallNode n1 = nodes.get(i);
+				WallNode n2 = nodes.get((i + 1) % size);
 
+				//List<WallHole> holesEnd = createEndHoles(n2);
 
-                Point2d vbl = new Point2d(0, minHeight);
-                Point2d vbr = new Point2d(segmentDistance, minHeight);
+				Point2d start = n1.getPoint();
+				double segmentDistance = n1.getPoint().distance(n2.getPoint());
+				Vector2d direction = new Vector2d(n2.getPoint());
+				direction.sub(n1.getPoint());
+				direction.normalize();
 
-                Point2d vtr = new Point2d(segmentDistance, wallHeight);
-                Point2d vtl = new Point2d(0, wallHeight);
+				// List<WallHole> holes = createHoles(n1);
 
-                PolygonList2d poly = new PolygonList2d(vbl, vbr, vtr, vtl);
-                MultiPolygonList2d mPoly = new MultiPolygonList2d(poly);
 
-                //List<List<Point2d>> holes = new ArrayList<List<Point2d>>();
-                //
-                //                mPoly = applyBuildingElements(mPoly, n1, 0, false );
-                //                mPoly = cutHoles(mPoly, n1, 0, false);
-                //                mPoly = cutHoles(mPoly, n2, segmentDistance, true);
+				Point2d vbl = new Point2d(0, minHeight);
+				Point2d vbr = new Point2d(segmentDistance, minHeight);
 
-                //                MultiPolygonList2d mPoly,
-                //                WallNode n1,
-                //                Vector2d direction,
-                //                double displacement,
-                //                boolean beginEnd,
-                //                CatchFaceFactory pCatchFaceFactory,
-                //                BuildingElementsTextureMenager pTextureMenager
+				Point2d vtr = new Point2d(segmentDistance, wallHeight);
+				Point2d vtl = new Point2d(0, wallHeight);
 
+				PolygonList2d poly = new PolygonList2d(vbl, vbr, vtr, vtl);
+				MultiPolygonList2d mPoly = new MultiPolygonList2d(poly);
 
-                //                mPoly = cutHoles(mPoly, holes);
+				//List<List<Point2d>> holes = new ArrayList<List<Point2d>>();
+				//
+				//                mPoly = applyBuildingElements(mPoly, n1, 0, false );
+				//                mPoly = cutHoles(mPoly, n1, 0, false);
+				//                mPoly = cutHoles(mPoly, n2, segmentDistance, true);
 
-                // build mesh
+				//                MultiPolygonList2d mPoly,
+				//                WallNode n1,
+				//                Vector2d direction,
+				//                double displacement,
+				//                boolean beginEnd,
+				//                CatchFaceFactory pCatchFaceFactory,
+				//                BuildingElementsTextureMenager pTextureMenager
 
 
-                Vector3d normal = new Vector3d(-direction.y, 0, -direction.x);
-                if (counterClockwise) {
-                    normal.negate();
-                }
+				//                mPoly = cutHoles(mPoly, holes);
 
-                int iN = mesh.addNormal(normal);
+				// build mesh
 
-                mPoly = applyWindows(mPoly, n1.getBuildingNodeElements(), start, direction, 0, false, catchFaceFactory, tm, counterClockwise);
-                mPoly = applyWindows(mPoly, n2.getBuildingNodeElements(), start, direction, segmentDistance, true, catchFaceFactory, tm, counterClockwise);
 
-                for (PolygonList2d polygon : mPoly.getPolygons()) {
-                    List<Point2d> points = polygon.getPoints();
-                    if (points.size() > 4) {
-                        throw new RuntimeException("more then 4 points in quate!" + points);
-                    }
+				Vector3d normal = new Vector3d(-direction.y, 0, -direction.x);
+				if (counterClockwise) {
+					normal.negate();
+				}
 
+				int iN = mesh.addNormal(normal);
 
-                    for (Point2d p : points) {
-                        //addPointToMesh(p, start, direction, mesh, face, iN, facadeTexture);
-                        int vi = segmentPointToVertex3dIndex(p, start, direction, mesh);
+				mPoly = applyWindows(mPoly, n1.getBuildingNodeElements(), start, direction, 0, false, catchFaceFactory, tm, counterClockwise);
+				mPoly = applyWindows(mPoly, n2.getBuildingNodeElements(), start, direction, segmentDistance, true, catchFaceFactory, tm, counterClockwise);
 
-                        int [] tex = new int[texNum];
+				for (PolygonList2d polygon : mPoly.getPolygons()) {
+					List<Point2d> points = polygon.getPoints();
+					if (points.size() > 4) {
+						throw new RuntimeException("more then 4 points in quate!" + points);
+					}
 
-                        tex[0] = segmentPointToTextureDataIndex(p, 0d, 0d,  mesh, facadeTD);
 
-                        if (isOverLayer) {
-                            tex[1] = tex[0];
-                        }
+					for (Point2d p : points) {
+						//addPointToMesh(p, start, direction, mesh, face, iN, facadeTexture);
+						int vi = segmentPointToVertex3dIndex(p, start, direction, mesh);
 
-                        if (isWindows) {
-                            tex[texNum - 1] = segmentPointToTextureDataIndex(p, wallDistance, 0d, mesh, windowsTexture);
-                        }
+						int [] tex = new int[texNum];
 
-                        face.addVert(vi, iN, tex);
-                    }
-                }
-                //FaceFactory face = pMeshBorder.addFace(FaceType.QUADS);
-                wallDistance += segmentDistance;
-            }
-        }
-    }
+						tex[0] = segmentPointToTextureDataIndex(p, 0d, 0d,  mesh, facadeTD);
 
-    private static double calcWallPartLength(WallPart wp) {
-        double wallLength = 0;
-        List<WallNode> nodes = wp.getNodes();
-        int size = nodes.size();
-        WallNode n1 = nodes.get(0);
-        for (int i = 1; i < size; i++) {
-            WallNode n2 = nodes.get(i);
+						if (isOverLayer) {
+							tex[1] = tex[0];
+						}
 
-            wallLength += n1.getPoint().distance(n2.getPoint());
+						if (isWindows) {
+							tex[texNum - 1] = segmentPointToTextureDataIndex(p, wallDistance, 0d, mesh, windowsTexture);
+						}
 
-            n1 = n2;
-        }
-        return wallLength;
-    }
+						face.addVert(vi, iN, tex);
+					}
+				}
+				//FaceFactory face = pMeshBorder.addFace(FaceType.QUADS);
+				wallDistance += segmentDistance;
+			}
+		}
+	}
 
-    private static int getFacadeLevels(Wall w, BuildingPart bp) {
+	private static double calcWallPartLength(WallPart wp) {
+		double wallLength = 0;
+		List<WallNode> nodes = wp.getNodes();
+		int size = nodes.size();
+		WallNode n1 = nodes.get(0);
+		for (int i = 1; i < size; i++) {
+			WallNode n2 = nodes.get(i);
 
-        return bp.getDefaultMaxLevel() - bp.getDefaultMinLevel() - bp.getDefaultRoofLevels();
-    }
+			wallLength += n1.getPoint().distance(n2.getPoint());
 
-    private static Integer hasWindowsCloumns(List<BuildingWallElement> list) {
-        if (list == null) {
-            return null;
-        }
+			n1 = n2;
+		}
+		return wallLength;
+	}
 
-        for (BuildingWallElement buildingWallElement : list) {
-            if (buildingWallElement instanceof WindowGridBuildingElement) {
-                WindowGridBuildingElement w = (WindowGridBuildingElement) buildingWallElement;
+	private static int getFacadeLevels(Wall w, BuildingPart bp) {
 
-                int numOfCols = w.getNumOfCols();
-                if (numOfCols > 0) {
-                    return numOfCols;
-                }
-                return null;
-            }
-        }
+		return bp.getDefaultMaxLevel() - bp.getDefaultMinLevel() - bp.getDefaultRoofLevels();
+	}
 
-        return null;
-    }
+	private static Integer hasWindowsCloumns(List<BuildingWallElement> list) {
+		if (list == null) {
+			return null;
+		}
 
-    private static TextureData takeWindowsColumnsTextureData(
-            BuildingModel buildingModel, BuildingPart bp, Wall w, WallPart wp, BuildingElementsTextureManager tm) {
+		for (BuildingWallElement buildingWallElement : list) {
+			if (buildingWallElement instanceof WindowGridBuildingElement) {
+				WindowGridBuildingElement w = (WindowGridBuildingElement) buildingWallElement;
 
+				int numOfCols = w.getNumOfCols();
+				if (numOfCols > 0) {
+					return numOfCols;
+				}
+				return null;
+			}
+		}
 
-        String mt = null;
+		return null;
+	}
 
-        TextureData td = tm.findTexture(new TextureFindCriteria(Type.WINDOWS, mt, null, null, null, false));
+	private static TextureData takeWindowsColumnsTextureData(
+			BuildingModel buildingModel, BuildingPart bp, Wall w, WallPart wp, BuildingElementsTextureManager tm) {
 
-        if (td == null) {
-            td = new TextureData(null, 1, 1);
-        }
 
-        return td;
-    }
+		String mt = null;
 
-    private static TextureData takeFacadeTextureData(BuildingModel buildingModel, NodeBuildingPart bp,
-            BuildingElementsTextureManager tm, boolean colorable) {
+		TextureData td = tm.findTexture(new TextureFindCriteria(Type.WINDOWS, mt, null, null, null, false));
 
-        String mt = null;
+		if (td == null) {
+			td = new TextureData(null, 1, 1);
+		}
 
-        if (bp.getFacadeMaterialType() != null) {
-            mt = bp.getFacadeMaterialType();
-        } else if (buildingModel.getFacadeMaterialType() != null) {
-            mt = buildingModel.getFacadeMaterialType();
-        }
+		return td;
+	}
 
-        TextureData td = tm.findTexture(new TextureFindCriteria(Type.FACADE, mt, null, null, null, colorable));
+	private static TextureData takeFacadeTextureData(BuildingModel buildingModel, NodeBuildingPart bp,
+			BuildingElementsTextureManager tm, boolean colorable) {
 
-        if (td == null) {
-            td = new TextureData(null, 1, 1);
-        }
+		String mt = null;
 
-        return td;
-    }
+		if (bp.getFacadeMaterialType() != null) {
+			mt = bp.getFacadeMaterialType();
+		} else if (buildingModel.getFacadeMaterialType() != null) {
+			mt = buildingModel.getFacadeMaterialType();
+		}
 
-    private static TextureData takeFacadeTextureData(BuildingModel buildingModel, BuildingPart bp, Wall w, WallPart wp,
-            BuildingElementsTextureManager tm, boolean colorable) {
+		TextureData td = tm.findTexture(new TextureFindCriteria(Type.FACADE, mt, null, null, null, colorable));
 
-        String mt = null;
+		if (td == null) {
+			td = new TextureData(null, 1, 1);
+		}
 
-        if (wp != null && wp.getFacadeMaterialType() != null) {
-            mt = wp.getFacadeMaterialType();
-        } else  if (w.getFacadeMaterialType() != null) {
-            mt = w.getFacadeMaterialType();
-        } else  if (bp.getFacadeMaterialType() != null) {
-            mt = bp.getFacadeMaterialType();
-        } else  if (buildingModel.getFacadeMaterialType() != null) {
-            mt = buildingModel.getFacadeMaterialType();
-        }
+		return td;
+	}
 
-        TextureData td = tm.findTexture(new TextureFindCriteria(Type.FACADE, mt, null, null, null, colorable));
+	private static TextureData takeFacadeTextureData(BuildingModel buildingModel, BuildingPart bp, Wall w, WallPart wp,
+			BuildingElementsTextureManager tm, boolean colorable) {
 
-        if (td == null) {
-            td = new TextureData(null, 1, 1);
-        }
+		String mt = null;
 
-        return td;
-    }
+		if (wp != null && wp.getFacadeMaterialType() != null) {
+			mt = wp.getFacadeMaterialType();
+		} else  if (w.getFacadeMaterialType() != null) {
+			mt = w.getFacadeMaterialType();
+		} else  if (bp.getFacadeMaterialType() != null) {
+			mt = bp.getFacadeMaterialType();
+		} else  if (buildingModel.getFacadeMaterialType() != null) {
+			mt = buildingModel.getFacadeMaterialType();
+		}
 
-    private static TextureData takeFloorTextureData(BuildingModel buildingModel, BuildingPart bp,
-            BuildingElementsTextureManager tm, boolean colorable) {
+		TextureData td = tm.findTexture(new TextureFindCriteria(Type.FACADE, mt, null, null, null, colorable));
 
-        String mt = null;
+		if (td == null) {
+			td = new TextureData(null, 1, 1);
+		}
 
-        if (bp.getFloorMaterialType() != null) {
-            mt = bp.getFloorMaterialType();
-        } else  if (buildingModel.getFloorMaterialType() != null) {
-            mt = buildingModel.getFloorMaterialType();
-        }
+		return td;
+	}
 
-        TextureData td = tm.findTexture(new TextureFindCriteria(Type.FLOOR, mt, null, null, null, colorable));
+	private static TextureData takeFloorTextureData(BuildingModel buildingModel, BuildingPart bp,
+			BuildingElementsTextureManager tm, boolean colorable) {
 
-        if (td == null) {
-            td = new TextureData(null, 1, 1);
-        }
+		String mt = null;
 
-        return td;
-    }
+		if (bp.getFloorMaterialType() != null) {
+			mt = bp.getFloorMaterialType();
+		} else  if (buildingModel.getFloorMaterialType() != null) {
+			mt = buildingModel.getFloorMaterialType();
+		}
 
-    private static Color takeFacadeColor(BuildingModel buildingModel, NodeBuildingPart bp, BuildingElementsTextureManager tm) {
+		TextureData td = tm.findTexture(new TextureFindCriteria(Type.FLOOR, mt, null, null, null, colorable));
 
-        Color c = null;
+		if (td == null) {
+			td = new TextureData(null, 1, 1);
+		}
 
-        if (bp.getFacadeColor() != null) {
-            c = bp.getFacadeColor();
-        } else if (buildingModel.getFacadeColor() != null) {
-            c = buildingModel.getFacadeColor();
-        }
+		return td;
+	}
 
-        return c;
-    }
+	private static Color takeFacadeColor(BuildingModel buildingModel, NodeBuildingPart bp, BuildingElementsTextureManager tm) {
 
-    private static Color takeFacadeColor(BuildingModel buildingModel, BuildingPart bp, Wall w, WallPart wp,
-            BuildingElementsTextureManager tm) {
+		Color c = null;
 
-        Color c = null;
+		if (bp.getFacadeColor() != null) {
+			c = bp.getFacadeColor();
+		} else if (buildingModel.getFacadeColor() != null) {
+			c = buildingModel.getFacadeColor();
+		}
 
-        if (wp != null && wp.getFacadeColor() != null) {
-            c = wp.getFacadeColor();
-        } else if (w.getFacadeColor() != null) {
-            c = w.getFacadeColor();
-        } else if (bp.getFacadeColor() != null) {
-            c = bp.getFacadeColor();
-        } else if (buildingModel.getFacadeColor() != null) {
-            c = buildingModel.getFacadeColor();
-        }
+		return c;
+	}
 
-        return c;
-    }
+	private static Color takeFacadeColor(BuildingModel buildingModel, BuildingPart bp, Wall w, WallPart wp,
+			BuildingElementsTextureManager tm) {
 
-    private static Color takeFloorColor(BuildingModel buildingModel, BuildingPart bp, BuildingElementsTextureManager tm) {
+		Color c = null;
 
-        Color c = null;
+		if (wp != null && wp.getFacadeColor() != null) {
+			c = wp.getFacadeColor();
+		} else if (w.getFacadeColor() != null) {
+			c = w.getFacadeColor();
+		} else if (bp.getFacadeColor() != null) {
+			c = bp.getFacadeColor();
+		} else if (buildingModel.getFacadeColor() != null) {
+			c = buildingModel.getFacadeColor();
+		}
 
-        if (bp.getFloorColor() != null) {
-            c = bp.getFloorColor();
-        } else if (buildingModel.getFloorColor() != null) {
-            c = buildingModel.getFloorColor();
-        }
+		return c;
+	}
 
-        return c;
-    }
+	private static Color takeFloorColor(BuildingModel buildingModel, BuildingPart bp, BuildingElementsTextureManager tm) {
 
-    private static Color takeRoofColor(BuildingModel buildingModel, BuildingPart bp, Wall w, WallPart wp,
-            BuildingElementsTextureManager tm) {
+		Color c = null;
 
-        Color c = null;
+		if (bp.getFloorColor() != null) {
+			c = bp.getFloorColor();
+		} else if (buildingModel.getFloorColor() != null) {
+			c = buildingModel.getFloorColor();
+		}
 
-        if (wp != null && wp.getRoofColor() != null) {
-            c = wp.getRoofColor();
-        } else if (w.getRoofColor() != null) {
-            c = w.getRoofColor();
-        } else if (bp.getRoofColor() != null) {
-            c = bp.getRoofColor();
-        } else if (buildingModel.getRoofColor() != null) {
-            c = buildingModel.getRoofColor();
-        }
+		return c;
+	}
 
-        return c;
-    }
+	private static Color takeRoofColor(BuildingModel buildingModel, BuildingPart bp, Wall w, WallPart wp,
+			BuildingElementsTextureManager tm) {
 
-    private static TextureData takeRoofTextureData(BuildingModel buildingModel, BuildingPart bp, Wall w,
-            BuildingElementsTextureManager tm, boolean colorable) {
+		Color c = null;
 
-        String mt = null;
+		if (wp != null && wp.getRoofColor() != null) {
+			c = wp.getRoofColor();
+		} else if (w.getRoofColor() != null) {
+			c = w.getRoofColor();
+		} else if (bp.getRoofColor() != null) {
+			c = bp.getRoofColor();
+		} else if (buildingModel.getRoofColor() != null) {
+			c = buildingModel.getRoofColor();
+		}
 
-        if (w.getRoofMaterialType() != null) {
-            mt = w.getRoofMaterialType();
-        } else  if (bp.getRoofMaterialType() != null) {
-            mt = bp.getRoofMaterialType();
-        } else  if (buildingModel.getRoofMaterialType() != null) {
-            mt = buildingModel.getRoofMaterialType();
-        }
+		return c;
+	}
 
-        TextureData td = tm.findTexture(new TextureFindCriteria(Type.ROOF, mt, null, null, null, colorable));
+	private static TextureData takeRoofTextureData(BuildingModel buildingModel, BuildingPart bp, Wall w,
+			BuildingElementsTextureManager tm, boolean colorable) {
 
-        if (td == null) {
-            td = new TextureData(null, 1, 1);
-        }
+		String mt = null;
 
-        return td;
-    }
+		if (w.getRoofMaterialType() != null) {
+			mt = w.getRoofMaterialType();
+		} else  if (bp.getRoofMaterialType() != null) {
+			mt = bp.getRoofMaterialType();
+		} else  if (buildingModel.getRoofMaterialType() != null) {
+			mt = buildingModel.getRoofMaterialType();
+		}
 
-    private static MultiPolygonList2d applyWindows(MultiPolygonList2d mPoly, List<BuildingNodeElement> pBuildingNodeElements,
-            Point2d segmentStart, Vector2d segmentDirection, double displacementOnSegment, boolean beginEnd,
-            CatchFaceFactory pCatchFaceFactory, BuildingElementsTextureManager pTextureMenager, boolean counterClockwise) {
+		TextureData td = tm.findTexture(new TextureFindCriteria(Type.ROOF, mt, null, null, null, colorable));
 
-        if (pBuildingNodeElements != null) {
-            for (BuildingNodeElement be : pBuildingNodeElements) {
+		if (td == null) {
+			td = new TextureData(null, 1, 1);
+		}
 
-                if (beginEnd) {
-                    mPoly = applyWindowsEnd(mPoly, be, segmentStart, segmentDirection, displacementOnSegment, pCatchFaceFactory, pTextureMenager, counterClockwise);
-                } else {
-                    mPoly = applyWindowsBegin(mPoly, be, segmentStart, segmentDirection, displacementOnSegment, pCatchFaceFactory, pTextureMenager, counterClockwise);
-                }
-            }
-        }
-        return mPoly;
-    }
+		return td;
+	}
 
-    private static MultiPolygonList2d applyWindowsBegin(MultiPolygonList2d mPoly, BuildingNodeElement be, Point2d segmentStart,
-            Vector2d segmentDirection, double nodeDisplacement, CatchFaceFactory pCatchFaceFactory,
-            BuildingElementsTextureManager pTextureMenager, boolean counterClockwise) {
+	private static MultiPolygonList2d applyWindows(MultiPolygonList2d mPoly, List<BuildingNodeElement> pBuildingNodeElements,
+			Point2d segmentStart, Vector2d segmentDirection, double displacementOnSegment, boolean beginEnd,
+			CatchFaceFactory pCatchFaceFactory, BuildingElementsTextureManager pTextureMenager, boolean counterClockwise) {
 
-        if (be instanceof SquareHoleElement) {
-            SquareHoleElement she = (SquareHoleElement) be;
+		if (pBuildingNodeElements != null) {
+			for (BuildingNodeElement be : pBuildingNodeElements) {
 
-            Point2d mbp = new Point2d(0, she.getMinHeight());
-            Point2d rbp = new Point2d(she.getWidth() / 2.0, she.getMinHeight());
-            Point2d rtp = new Point2d(she.getWidth() / 2.0, she.getMaxHeight());
-            Point2d mtp = new Point2d(0 , she.getMaxHeight());
+				if (beginEnd) {
+					mPoly = applyWindowsEnd(mPoly, be, segmentStart, segmentDirection, displacementOnSegment, pCatchFaceFactory, pTextureMenager, counterClockwise);
+				} else {
+					mPoly = applyWindowsBegin(mPoly, be, segmentStart, segmentDirection, displacementOnSegment, pCatchFaceFactory, pTextureMenager, counterClockwise);
+				}
+			}
+		}
+		return mPoly;
+	}
 
-            mPoly = PolygonSplitUtil.unionOfFrontPart(mPoly,
-                    new LinePoints2d(rtp, rbp),
-                    new LinePoints2d(mtp, rtp),
-                    new LinePoints2d(rbp, mbp)
-                    );
+	private static MultiPolygonList2d applyWindowsBegin(MultiPolygonList2d mPoly, BuildingNodeElement be, Point2d segmentStart,
+			Vector2d segmentDirection, double nodeDisplacement, CatchFaceFactory pCatchFaceFactory,
+			BuildingElementsTextureManager pTextureMenager, boolean counterClockwise) {
 
-            TextureData td = findWindowTextureData(be, pTextureMenager);
+		if (be instanceof SquareHoleElement) {
+			SquareHoleElement she = (SquareHoleElement) be;
 
-            MeshFactory mesh = pCatchFaceFactory.createOrGetMeshFactory(td.getTex0());
+			Point2d mbp = new Point2d(0, she.getMinHeight());
+			Point2d rbp = new Point2d(she.getWidth() / 2.0, she.getMinHeight());
+			Point2d rtp = new Point2d(she.getWidth() / 2.0, she.getMaxHeight());
+			Point2d mtp = new Point2d(0 , she.getMaxHeight());
 
-            FaceFactory face = mesh.addFace(FaceType.QUADS);
+			mPoly = PolygonSplitUtil.unionOfFrontPart(mPoly,
+					new LinePoints2d(rtp, rbp),
+					new LinePoints2d(mtp, rtp),
+					new LinePoints2d(rbp, mbp)
+					);
 
-            Vector3d n = new Vector3d(-segmentDirection.y, 0, -segmentDirection.x);
-            if (counterClockwise) {
-                n.negate();
-            }
+			TextureData td = findWindowTextureData(be, pTextureMenager);
 
-            int iN = mesh.addNormal(n);
+			MeshFactory mesh = pCatchFaceFactory.createOrGetMeshFactory(td.getTex0());
 
-            int imbTc = mesh.addTextCoord(new TextCoord(0.5, 0));
-            int imtTc = mesh.addTextCoord(new TextCoord(0.5, 1));
-            int irbTc = mesh.addTextCoord(new TextCoord(1, 0));
-            int irtTc = mesh.addTextCoord(new TextCoord(1, 1));
+			FaceFactory face = mesh.addFace(FaceType.QUADS);
 
-            face.addVert(
-                    segmentPointToVertex3dIndex(mbp, segmentStart, segmentDirection, mesh),
-                    imbTc,
-                    iN);
-            face.addVert(
-                    segmentPointToVertex3dIndex(rbp, segmentStart, segmentDirection, mesh),
-                    irbTc,
-                    iN);
-            face.addVert(
-                    segmentPointToVertex3dIndex(rtp, segmentStart, segmentDirection, mesh),
-                    irtTc,
-                    iN);
-            face.addVert(
-                    segmentPointToVertex3dIndex(mtp, segmentStart, segmentDirection, mesh),
-                    imtTc,
-                    iN);
+			Vector3d n = new Vector3d(-segmentDirection.y, 0, -segmentDirection.x);
+			if (counterClockwise) {
+				n.negate();
+			}
 
-        }
+			int iN = mesh.addNormal(n);
 
-        return mPoly;
-    }
+			int imbTc = mesh.addTextCoord(new TextCoord(0.5, 0));
+			int imtTc = mesh.addTextCoord(new TextCoord(0.5, 1));
+			int irbTc = mesh.addTextCoord(new TextCoord(1, 0));
+			int irtTc = mesh.addTextCoord(new TextCoord(1, 1));
 
-    private static MultiPolygonList2d applyWindowsEnd(MultiPolygonList2d mPoly, BuildingNodeElement be, Point2d segmentStart,
-            Vector2d segmentDirection, double nodeDisplacement, CatchFaceFactory pCatchFaceFactory,
-            BuildingElementsTextureManager pTextureMenager, boolean counterClockwise) {
+			face.addVert(
+					segmentPointToVertex3dIndex(mbp, segmentStart, segmentDirection, mesh),
+					imbTc,
+					iN);
+			face.addVert(
+					segmentPointToVertex3dIndex(rbp, segmentStart, segmentDirection, mesh),
+					irbTc,
+					iN);
+			face.addVert(
+					segmentPointToVertex3dIndex(rtp, segmentStart, segmentDirection, mesh),
+					irtTc,
+					iN);
+			face.addVert(
+					segmentPointToVertex3dIndex(mtp, segmentStart, segmentDirection, mesh),
+					imtTc,
+					iN);
 
-        if (be instanceof SquareHoleElement) {
-            SquareHoleElement she = (SquareHoleElement) be;
+		}
 
+		return mPoly;
+	}
 
-            Point2d lbp = new Point2d(nodeDisplacement - she.getWidth() / 2.0, she.getMinHeight());
-            Point2d mbp = new Point2d(nodeDisplacement, she.getMinHeight());
-            Point2d mtp = new Point2d(nodeDisplacement, she.getMaxHeight());
-            Point2d ltp = new Point2d(nodeDisplacement - she.getWidth() / 2.0, she.getMaxHeight());
+	private static MultiPolygonList2d applyWindowsEnd(MultiPolygonList2d mPoly, BuildingNodeElement be, Point2d segmentStart,
+			Vector2d segmentDirection, double nodeDisplacement, CatchFaceFactory pCatchFaceFactory,
+			BuildingElementsTextureManager pTextureMenager, boolean counterClockwise) {
 
+		if (be instanceof SquareHoleElement) {
+			SquareHoleElement she = (SquareHoleElement) be;
 
-            mPoly = PolygonSplitUtil.unionOfFrontPart(mPoly,
-                    new LinePoints2d(lbp, ltp),
-                    new LinePoints2d(ltp, mtp),
-                    new LinePoints2d(mbp, lbp)
-                    );
 
+			Point2d lbp = new Point2d(nodeDisplacement - she.getWidth() / 2.0, she.getMinHeight());
+			Point2d mbp = new Point2d(nodeDisplacement, she.getMinHeight());
+			Point2d mtp = new Point2d(nodeDisplacement, she.getMaxHeight());
+			Point2d ltp = new Point2d(nodeDisplacement - she.getWidth() / 2.0, she.getMaxHeight());
 
-            TextureData td = findWindowTextureData(be, pTextureMenager);
 
-            MeshFactory mesh = pCatchFaceFactory.createOrGetMeshFactory(td.getTex0());
+			mPoly = PolygonSplitUtil.unionOfFrontPart(mPoly,
+					new LinePoints2d(lbp, ltp),
+					new LinePoints2d(ltp, mtp),
+					new LinePoints2d(mbp, lbp)
+					);
 
-            FaceFactory face = mesh.addFace(FaceType.QUADS);
 
-            Vector3d n = new Vector3d(-segmentDirection.y, 0, -segmentDirection.x);
-            if (counterClockwise) {
-                n.negate();
-            }
+			TextureData td = findWindowTextureData(be, pTextureMenager);
 
-            int iN = mesh.addNormal(n);
+			MeshFactory mesh = pCatchFaceFactory.createOrGetMeshFactory(td.getTex0());
 
-            int imbTc = mesh.addTextCoord(new TextCoord(0.5, 0));
-            int imtTc = mesh.addTextCoord(new TextCoord(0.5, 1));
-            int ilbTc = mesh.addTextCoord(new TextCoord(0, 0));
-            int iltTc = mesh.addTextCoord(new TextCoord(0, 1));
+			FaceFactory face = mesh.addFace(FaceType.QUADS);
 
-            face.addVert(
-                    segmentPointToVertex3dIndex(lbp, segmentStart, segmentDirection, mesh),
-                    ilbTc,
-                    iN);
-            face.addVert(
-                    segmentPointToVertex3dIndex(mbp, segmentStart, segmentDirection, mesh),
-                    imbTc,
-                    iN);
-            face.addVert(
-                    segmentPointToVertex3dIndex(mtp, segmentStart, segmentDirection, mesh),
-                    imtTc,
-                    iN);
-            face.addVert(
-                    segmentPointToVertex3dIndex(ltp, segmentStart, segmentDirection, mesh),
-                    iltTc,
-                    iN);
+			Vector3d n = new Vector3d(-segmentDirection.y, 0, -segmentDirection.x);
+			if (counterClockwise) {
+				n.negate();
+			}
 
-        }
+			int iN = mesh.addNormal(n);
 
-        return mPoly;
-    }
+			int imbTc = mesh.addTextCoord(new TextCoord(0.5, 0));
+			int imtTc = mesh.addTextCoord(new TextCoord(0.5, 1));
+			int ilbTc = mesh.addTextCoord(new TextCoord(0, 0));
+			int iltTc = mesh.addTextCoord(new TextCoord(0, 1));
 
-    private static TextureData findWindowTextureData(BuildingNodeElement be, BuildingElementsTextureManager pTextureMenager) {
+			face.addVert(
+					segmentPointToVertex3dIndex(lbp, segmentStart, segmentDirection, mesh),
+					ilbTc,
+					iN);
+			face.addVert(
+					segmentPointToVertex3dIndex(mbp, segmentStart, segmentDirection, mesh),
+					imbTc,
+					iN);
+			face.addVert(
+					segmentPointToVertex3dIndex(mtp, segmentStart, segmentDirection, mesh),
+					imtTc,
+					iN);
+			face.addVert(
+					segmentPointToVertex3dIndex(ltp, segmentStart, segmentDirection, mesh),
+					iltTc,
+					iN);
 
-        TextureData td = null;
-        if (be instanceof WindowBuildingElement) {
-            WindowBuildingElement wbe = (WindowBuildingElement) be;
+		}
 
-            td = pTextureMenager.findTexture(
-                    new TextureFindCriteria(Type.WINDOW, wbe.getWindowType(), null, wbe.getWidth(), wbe.getHeight(), false));
-        } else if (be instanceof EntranceBuildingElement) {
-            EntranceBuildingElement wbe = (EntranceBuildingElement) be;
+		return mPoly;
+	}
 
-            td = pTextureMenager.findTexture(
-                    new TextureFindCriteria(Type.ENTERENCE, wbe.getEntranceType(), null, wbe.getWidth(), wbe.getHeight(), false));
-        } else{
-            throw new RuntimeException("unsuported buidlding element " + be);
-        }
+	private static TextureData findWindowTextureData(BuildingNodeElement be, BuildingElementsTextureManager pTextureMenager) {
 
-        if (td == null) {
-            td = createEmptyTextureData();
-        }
-        return td;
-    }
+		TextureData td = null;
+		if (be instanceof WindowBuildingElement) {
+			WindowBuildingElement wbe = (WindowBuildingElement) be;
 
+			td = pTextureMenager.findTexture(
+					new TextureFindCriteria(Type.WINDOW, wbe.getWindowType(), null, wbe.getWidth(), wbe.getHeight(), false));
+		} else if (be instanceof EntranceBuildingElement) {
+			EntranceBuildingElement wbe = (EntranceBuildingElement) be;
 
-    static class CatchFaceFactory {
-        private Map<String, MeshFactory> catchMesh = new HashMap<String, MeshFactory>();
-        private ModelFactory mf;
+			td = pTextureMenager.findTexture(
+					new TextureFindCriteria(Type.ENTERENCE, wbe.getEntranceType(), null, wbe.getWidth(), wbe.getHeight(), false));
+		} else{
+			throw new RuntimeException("unsuported buidlding element " + be);
+		}
 
-        public CatchFaceFactory(ModelFactory mf) {
-            this.mf = mf;
-        }
+		if (td == null) {
+			td = createEmptyTextureData();
+		}
+		return td;
+	}
 
-        MeshFactory createOrGetMeshFactory(String texture0Key, String texture1Key, Color color) {
-            throw new RuntimeException("TODO");
-        }
 
-        MeshFactory createOrGetMeshFactory(String textureKey) {
+	static class CatchFaceFactory {
+		private Map<String, MeshFactory> catchMesh = new HashMap<String, MeshFactory>();
+		private ModelFactory mf;
 
-            MeshFactory meshFactory = this.catchMesh.get(textureKey);
-            if (meshFactory == null) {
-                meshFactory = this.mf.addMesh(textureKey);
+		public CatchFaceFactory(ModelFactory mf) {
+			this.mf = mf;
+		}
 
-                Material mat = MaterialFactory.createTextureMaterial(textureKey);
-                int iMat = this.mf.addMaterial(mat);
+		MeshFactory createOrGetMeshFactory(String texture0Key, String texture1Key, Color color) {
+			throw new RuntimeException("TODO");
+		}
 
-                meshFactory.materialID = iMat;
-                meshFactory.hasTexture = true;
+		MeshFactory createOrGetMeshFactory(String textureKey) {
 
-                this.catchMesh.put(textureKey, meshFactory);
-            }
+			MeshFactory meshFactory = this.catchMesh.get(textureKey);
+			if (meshFactory == null) {
+				meshFactory = this.mf.addMesh(textureKey);
 
-            return meshFactory;
-        }
-    }
+				Material mat = MaterialFactory.createTextureMaterial(textureKey);
+				int iMat = this.mf.addMaterial(mat);
 
-    private static TextureData createEmptyTextureData() {
-        return new TextureData(null, 1, 1);
-    }
+				meshFactory.materialID = iMat;
+				meshFactory.hasTexture = true;
 
-    private static int segmentPointToTextureDataIndex(Point2d point, double offsetX, double offsetY, MeshFactory mesh,
-            TextureData td) {
+				this.catchMesh.put(textureKey, meshFactory);
+			}
 
-        return mesh.addTextCoord(new TextCoord((point.x + offsetX) / td.getWidth(), (point.y + offsetY) / td.getHeight()));
-    }
+			return meshFactory;
+		}
+	}
 
-    private static int segmentPointToVertex3dIndex(Point2d point, Point2d start, Vector2d direction, MeshFactory mesh) {
-        Point3d vertex = new Point3d(direction.x, 0, -direction.y);
+	private static TextureData createEmptyTextureData() {
+		return new TextureData(null, 1, 1);
+	}
 
-        vertex.scale(point.x);
-        vertex.x += start.x;
-        vertex.z -= start.y;
+	private static int segmentPointToTextureDataIndex(Point2d point, double offsetX, double offsetY, MeshFactory mesh,
+			TextureData td) {
 
-        vertex.y = point.y;
+		return mesh.addTextCoord(new TextCoord((point.x + offsetX) / td.getWidth(), (point.y + offsetY) / td.getHeight()));
+	}
 
-        int iV = mesh.addVertex(vertex);
-        return iV;
-    }
+	private static int segmentPointToVertex3dIndex(Point2d point, Point2d start, Vector2d direction, MeshFactory mesh) {
+		Point3d vertex = new Point3d(direction.x, 0, -direction.y);
 
+		vertex.scale(point.x);
+		vertex.x += start.x;
+		vertex.z -= start.y;
 
-    static class WallHole {
-        private Point2d ldp;
-        private Point2d rdp;
-        private Point2d rtp;
-        private Point2d ltp;
+		vertex.y = point.y;
 
-        /**
-         * @return the ldp
-         */
-        public Point2d getLdp() {
-            return this.ldp;
-        }
+		int iV = mesh.addVertex(vertex);
+		return iV;
+	}
 
-        /**
-         * @param ldp the ldp to set
-         */
-        public void setLdp(Point2d ldp) {
-            this.ldp = ldp;
-        }
 
-        /**
-         * @return the rdp
-         */
-        public Point2d getRdp() {
-            return this.rdp;
-        }
+	static class WallHole {
+		private Point2d ldp;
+		private Point2d rdp;
+		private Point2d rtp;
+		private Point2d ltp;
 
-        /**
-         * @param rdp the rdp to set
-         */
-        public void setRdp(Point2d rdp) {
-            this.rdp = rdp;
-        }
+		/**
+		 * @return the ldp
+		 */
+		public Point2d getLdp() {
+			return this.ldp;
+		}
 
-        /**
-         * @return the rtp
-         */
-        public Point2d getRtp() {
-            return this.rtp;
-        }
+		/**
+		 * @param ldp the ldp to set
+		 */
+		public void setLdp(Point2d ldp) {
+			this.ldp = ldp;
+		}
 
-        /**
-         * @param rtp the rtp to set
-         */
-        public void setRtp(Point2d rtp) {
-            this.rtp = rtp;
-        }
+		/**
+		 * @return the rdp
+		 */
+		public Point2d getRdp() {
+			return this.rdp;
+		}
 
-        /**
-         * @return the ltp
-         */
-        public Point2d getLtp() {
-            return this.ltp;
-        }
+		/**
+		 * @param rdp the rdp to set
+		 */
+		public void setRdp(Point2d rdp) {
+			this.rdp = rdp;
+		}
 
-        /**
-         * @param ltp the ltp to set
-         */
-        public void setLtp(Point2d ltp) {
-            this.ltp = ltp;
-        }
-    }
+		/**
+		 * @return the rtp
+		 */
+		public Point2d getRtp() {
+			return this.rtp;
+		}
+
+		/**
+		 * @param rtp the rtp to set
+		 */
+		public void setRtp(Point2d rtp) {
+			this.rtp = rtp;
+		}
+
+		/**
+		 * @return the ltp
+		 */
+		public Point2d getLtp() {
+			return this.ltp;
+		}
+
+		/**
+		 * @param ltp the ltp to set
+		 */
+		public void setLtp(Point2d ltp) {
+			this.ltp = ltp;
+		}
+	}
 
 }

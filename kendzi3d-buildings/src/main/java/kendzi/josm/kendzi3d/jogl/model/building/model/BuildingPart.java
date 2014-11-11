@@ -3,368 +3,381 @@ package kendzi.josm.kendzi3d.jogl.model.building.model;
 import java.awt.Color;
 import java.util.List;
 
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
+
 import kendzi.josm.kendzi3d.jogl.model.building.model.roof.RoofModel;
 
 public class BuildingPart {
 
-    private static final double DEFAULT_BUILDING_HEIGHT = 8;
+	private static final double DEFAULT_BUILDING_HEIGHT = 8;
 
-    Double maxHeight;
+	Double maxHeight;
 
-    Double minHeight;
+	Double minHeight;
 
-    Integer maxLevel;
+	Integer maxLevel;
 
-    Integer minLevel;
+	Integer minLevel;
 
-    Integer roofLevels;
+	Integer roofLevels;
 
-    double levelHeight = 2.5;
+	double levelHeight = 2.5;
 
-    private String facadeMaterialType;
+	private String facadeMaterialType;
 
-    private String roofMaterialType;
+	private String roofMaterialType;
 
-    private String floorMaterialType;
+	private String floorMaterialType;
 
-    private Color facadeColor;
+	private Color facadeColor;
 
-    private Color roofColor;
+	// get osm Primitive for each building 
+	private OsmPrimitive osmPrimitive;
 
-    private Color floorColor;
+	public OsmPrimitive getOsmPrimitive() {
+		return osmPrimitive;
+	}
 
-    private RoofModel roof;
+	public void setOsmPrimitive(OsmPrimitive osmPrimitive) {
+		this.osmPrimitive = osmPrimitive;
+	}
 
-    // Outline
-    private Wall wall;
+	private Color roofColor;
 
-    // Inline
-    private List<Wall> inlineWalls;
+	private Color floorColor;
+
+	private RoofModel roof;
+
+	// Outline
+	private Wall wall;
+
+	// Inline
+	private List<Wall> inlineWalls;
 
 
-    // Windows
+	// Windows
 
-    // Indoor
+	// Indoor
 
-    // XXX move to util
-    public double getDefaultMinHeight() {
-        if (this.minHeight != null) {
-            return this.minHeight;
-        }
+	// XXX move to util
+	public double getDefaultMinHeight() {
+		if (this.minHeight != null) {
+			return this.minHeight;
+		}
 
-        if (this.minLevel != null) {
-            return this.minLevel * this.levelHeight;
-        }
-        return 0;
-    }
+		if (this.minLevel != null) {
+			return this.minLevel * this.levelHeight;
+		}
+		return 0;
+	}
 
-    // XXX move to util
-    public double getDefaultMaxHeight() {
-        if (this.maxHeight != null) {
-            return this.maxHeight;
-        }
+	// XXX move to util
+	public double getDefaultMaxHeight() {
+		if (this.maxHeight != null) {
+			return this.maxHeight;
+		}
 
-        if (this.maxLevel != null) {
-            return this.maxLevel * this.levelHeight;
-        }
-        return getDefaultMinHeight() + DEFAULT_BUILDING_HEIGHT;
-    }
+		if (this.maxLevel != null) {
+			return this.maxLevel * this.levelHeight;
+		}
+		return getDefaultMinHeight() + DEFAULT_BUILDING_HEIGHT;
+	}
 
-    // XXX move to util
-    public int getDefaultMinLevel() {
-        if (this.minLevel != null) {
-            return this.minLevel;
-        }
+	// XXX move to util
+	public int getDefaultMinLevel() {
+		if (this.minLevel != null) {
+			return this.minLevel;
+		}
 
-        return 0;
-    }
+		return 0;
+	}
 
-    // XXX move to util
-    public int getDefaultMaxLevel() {
-        if (this.maxLevel != null) {
-            return this.maxLevel;
-        }
+	// XXX move to util
+	public int getDefaultMaxLevel() {
+		if (this.maxLevel != null) {
+			return this.maxLevel;
+		}
 
-        return getDefaultMinLevel() + 1;
-    }
+		return getDefaultMinLevel() + 1;
+	}
 
-    public int getDefaultRoofLevels() {
-        if (this.roofLevels != null) {
-            return this.roofLevels;
-        }
-        return 0;
-    }
+	public int getDefaultRoofLevels() {
+		if (this.roofLevels != null) {
+			return this.roofLevels;
+		}
+		return 0;
+	}
 
-    public double getDefaultRoofHeight() {
-        if (this.roofLevels != null) {
-            return this.roofLevels * levelHeight;
-        }
-        return 0;
-    }
+	public double getDefaultRoofHeight() {
+		if (this.roofLevels != null) {
+			return this.roofLevels * levelHeight;
+		}
+		return 0;
+	}
 
-    /**
-     * @return the levelHeight
-     */
-    public double getLevelHeight() {
-        return this.levelHeight;
-    }
+	/**
+	 * @return the levelHeight
+	 */
+	 public double getLevelHeight() {
+		 return this.levelHeight;
+	 }
 
-    /**
-     * @param levelHeight
-     *            the levelHeight to set
-     */
-    public void setLevelHeight(double levelHeight) {
-        this.levelHeight = levelHeight;
-    }
+	 /**
+	  * @param levelHeight
+	  *            the levelHeight to set
+	  */
+	 public void setLevelHeight(double levelHeight) {
+		 this.levelHeight = levelHeight;
+	 }
 
-    /**
-     * @return the roof
-     */
-    public RoofModel getRoof() {
-        return this.roof;
-    }
+	 /**
+	  * @return the roof
+	  */
+	 public RoofModel getRoof() {
+		 return this.roof;
+	 }
 
-    /**
-     * @param roof
-     *            the roof to set
-     */
-    public void setRoof(RoofModel roof) {
-        this.roof = roof;
-    }
+	 /**
+	  * @param roof
+	  *            the roof to set
+	  */
+	 public void setRoof(RoofModel roof) {
+		 this.roof = roof;
+	 }
 
-    /**
-     * @return the wall
-     */
-    public Wall getWall() {
-        return this.wall;
-    }
+	 /**
+	  * @return the wall
+	  */
+	 public Wall getWall() {
+		 return this.wall;
+	 }
 
-    /**
-     * @param wall
-     *            the wall to set
-     */
-    public void setWall(Wall wall) {
-        this.wall = wall;
-    }
+	 /**
+	  * @param wall
+	  *            the wall to set
+	  */
+	 public void setWall(Wall wall) {
+		 this.wall = wall;
+	 }
 
-    /**
-     * @return the inlineWalls
-     */
-    public List<Wall> getInlineWalls() {
-        return this.inlineWalls;
-    }
+	 /**
+	  * @return the inlineWalls
+	  */
+	 public List<Wall> getInlineWalls() {
+		 return this.inlineWalls;
+	 }
 
-    /**
-     * @param inlineWalls
-     *            the inlineWalls to set
-     */
-    public void setInlineWalls(List<Wall> inlineWalls) {
-        this.inlineWalls = inlineWalls;
-    }
+	 /**
+	  * @param inlineWalls
+	  *            the inlineWalls to set
+	  */
+	 public void setInlineWalls(List<Wall> inlineWalls) {
+		 this.inlineWalls = inlineWalls;
+	 }
 
-    // /**
-    // * @return the facadeTextureData
-    // */
-    // public TextureData getFacadeTextureData() {
-    // return facadeTextureData;
-    // }
-    //
-    // /**
-    // * @param facadeTextureData the facadeTextureData to set
-    // */
-    // public void setFacadeTextureData(TextureData facadeTextureData) {
-    // this.facadeTextureData = facadeTextureData;
-    // }
+	 // /**
+	 // * @return the facadeTextureData
+	 // */
+	 // public TextureData getFacadeTextureData() {
+	 // return facadeTextureData;
+	 // }
+	 //
+	 // /**
+	 // * @param facadeTextureData the facadeTextureData to set
+	 // */
+	 // public void setFacadeTextureData(TextureData facadeTextureData) {
+	 // this.facadeTextureData = facadeTextureData;
+	 // }
 
-    /**
-     * @return the maxHeight
-     */
-    public Double getMaxHeight() {
-        return this.maxHeight;
-    }
+	 /**
+	  * @return the maxHeight
+	  */
+	 public Double getMaxHeight() {
+		 return this.maxHeight;
+	 }
 
-    /**
-     * @param maxHeight
-     *            the maxHeight to set
-     */
-    public void setMaxHeight(Double maxHeight) {
-        this.maxHeight = maxHeight;
-    }
+	 /**
+	  * @param maxHeight
+	  *            the maxHeight to set
+	  */
+	 public void setMaxHeight(Double maxHeight) {
+		 this.maxHeight = maxHeight;
+	 }
 
-    /**
-     * @return the minHeight
-     */
-    public Double getMinHeight() {
-        return this.minHeight;
-    }
+	 /**
+	  * @return the minHeight
+	  */
+	 public Double getMinHeight() {
+		 return this.minHeight;
+	 }
 
-    /**
-     * @param minHeight
-     *            the minHeight to set
-     */
-    public void setMinHeight(Double minHeight) {
-        this.minHeight = minHeight;
-    }
+	 /**
+	  * @param minHeight
+	  *            the minHeight to set
+	  */
+	 public void setMinHeight(Double minHeight) {
+		 this.minHeight = minHeight;
+	 }
 
-    /**
-     * @return the maxLevel
-     */
-    public Integer getMaxLevel() {
-        return this.maxLevel;
-    }
+	 /**
+	  * @return the maxLevel
+	  */
+	 public Integer getMaxLevel() {
+		 return this.maxLevel;
+	 }
 
-    /**
-     * @param maxLevel
-     *            the maxLevel to set
-     */
-    public void setMaxLevel(Integer maxLevel) {
-        this.maxLevel = maxLevel;
-    }
+	 /**
+	  * @param maxLevel
+	  *            the maxLevel to set
+	  */
+	 public void setMaxLevel(Integer maxLevel) {
+		 this.maxLevel = maxLevel;
+	 }
 
-    /**
-     * @return the minLevel
-     */
-    public Integer getMinLevel() {
-        return this.minLevel;
-    }
+	 /**
+	  * @return the minLevel
+	  */
+	 public Integer getMinLevel() {
+		 return this.minLevel;
+	 }
 
-    /**
-     * @param minLevel
-     *            the minLevel to set
-     */
-    public void setMinLevel(Integer minLevel) {
-        this.minLevel = minLevel;
-    }
+	 /**
+	  * @param minLevel
+	  *            the minLevel to set
+	  */
+	 public void setMinLevel(Integer minLevel) {
+		 this.minLevel = minLevel;
+	 }
 
-    //    /**
-    //     * @return the dormerRoofModel
-    //     */
-    //    public DormerRoofModel getDormerRoofModel() {
-    //        return this.dormerRoofModel;
-    //    }
-    //
-    //    /**
-    //     * @param dormerRoofModel
-    //     *            the dormerRoofModel to set
-    //     */
-    //    public void setDormerRoofModel(DormerRoofModel dormerRoofModel) {
-    //        this.dormerRoofModel = dormerRoofModel;
-    //    }
+	 //    /**
+	 //     * @return the dormerRoofModel
+	 //     */
+	 //    public DormerRoofModel getDormerRoofModel() {
+	 //        return this.dormerRoofModel;
+	 //    }
+	 //
+	 //    /**
+	 //     * @param dormerRoofModel
+	 //     *            the dormerRoofModel to set
+	 //     */
+	 //    public void setDormerRoofModel(DormerRoofModel dormerRoofModel) {
+	 //        this.dormerRoofModel = dormerRoofModel;
+	 //    }
 
-    // /**
-    // * @return the roofTextureData
-    // */
-    // public TextureData getRoofTextureData() {
-    // return roofTextureData;
-    // }
-    //
-    // /**
-    // * @param roofTextureData the roofTextureData to set
-    // */
-    // public void setRoofTextureData(TextureData roofTextureData) {
-    // this.roofTextureData = roofTextureData;
-    // }
+	 // /**
+	 // * @return the roofTextureData
+	 // */
+	 // public TextureData getRoofTextureData() {
+	 // return roofTextureData;
+	 // }
+	 //
+	 // /**
+	 // * @param roofTextureData the roofTextureData to set
+	 // */
+	 // public void setRoofTextureData(TextureData roofTextureData) {
+	 // this.roofTextureData = roofTextureData;
+	 // }
 
-    /**
-     * @return the facadeMaterialType
-     */
-    public String getFacadeMaterialType() {
-        return this.facadeMaterialType;
-    }
+	 /**
+	  * @return the facadeMaterialType
+	  */
+	 public String getFacadeMaterialType() {
+		 return this.facadeMaterialType;
+	 }
 
-    /**
-     * @param facadeMaterialType
-     *            the facadeMaterialType to set
-     */
-    public void setFacadeMaterialType(String facadeMaterialType) {
-        this.facadeMaterialType = facadeMaterialType;
-    }
+	 /**
+	  * @param facadeMaterialType
+	  *            the facadeMaterialType to set
+	  */
+	 public void setFacadeMaterialType(String facadeMaterialType) {
+		 this.facadeMaterialType = facadeMaterialType;
+	 }
 
-    /**
-     * @return the roofMaterialType
-     */
-    public String getRoofMaterialType() {
-        return this.roofMaterialType;
-    }
+	 /**
+	  * @return the roofMaterialType
+	  */
+	 public String getRoofMaterialType() {
+		 return this.roofMaterialType;
+	 }
 
-    /**
-     * @param roofMaterialType
-     *            the roofMaterialType to set
-     */
-    public void setRoofMaterialType(String roofMaterialType) {
-        this.roofMaterialType = roofMaterialType;
-    }
+	 /**
+	  * @param roofMaterialType
+	  *            the roofMaterialType to set
+	  */
+	 public void setRoofMaterialType(String roofMaterialType) {
+		 this.roofMaterialType = roofMaterialType;
+	 }
 
-    /**
-     * @return the facadeColor
-     */
-    public Color getFacadeColor() {
-        return this.facadeColor;
-    }
+	 /**
+	  * @return the facadeColor
+	  */
+	 public Color getFacadeColor() {
+		 return this.facadeColor;
+	 }
 
-    /**
-     * @param facadeColor
-     *            the facadeColor to set
-     */
-    public void setFacadeColor(Color facadeColor) {
-        this.facadeColor = facadeColor;
-    }
+	 /**
+	  * @param facadeColor
+	  *            the facadeColor to set
+	  */
+	 public void setFacadeColor(Color facadeColor) {
+		 this.facadeColor = facadeColor;
+	 }
 
-    /**
-     * @return the roofColor
-     */
-    public Color getRoofColor() {
-        return this.roofColor;
-    }
+	 /**
+	  * @return the roofColor
+	  */
+	 public Color getRoofColor() {
+		 return this.roofColor;
+	 }
 
-    /**
-     * @param roofColor
-     *            the roofColor to set
-     */
-    public void setRoofColor(Color roofColor) {
-        this.roofColor = roofColor;
-    }
+	 /**
+	  * @param roofColor
+	  *            the roofColor to set
+	  */
+	 public void setRoofColor(Color roofColor) {
+		 this.roofColor = roofColor;
+	 }
 
-    /**
-     * @return the roofLevels
-     */
-    public Integer getRoofLevels() {
-        return this.roofLevels;
-    }
+	 /**
+	  * @return the roofLevels
+	  */
+	 public Integer getRoofLevels() {
+		 return this.roofLevels;
+	 }
 
-    /**
-     * @param roofLevels
-     *            the roofLevels to set
-     */
-    public void setRoofLevels(Integer roofLevels) {
-        this.roofLevels = roofLevels;
-    }
+	 /**
+	  * @param roofLevels
+	  *            the roofLevels to set
+	  */
+	 public void setRoofLevels(Integer roofLevels) {
+		 this.roofLevels = roofLevels;
+	 }
 
-    /**
-     * @return the floorMaterialType
-     */
-    public String getFloorMaterialType() {
-        return floorMaterialType;
-    }
+	 /**
+	  * @return the floorMaterialType
+	  */
+	 public String getFloorMaterialType() {
+		 return floorMaterialType;
+	 }
 
-    /**
-     * @param floorMaterialType the floorMaterialType to set
-     */
-    public void setFloorMaterialType(String floorMaterialType) {
-        this.floorMaterialType = floorMaterialType;
-    }
+	 /**
+	  * @param floorMaterialType the floorMaterialType to set
+	  */
+	 public void setFloorMaterialType(String floorMaterialType) {
+		 this.floorMaterialType = floorMaterialType;
+	 }
 
-    /**
-     * @return the floorColor
-     */
-    public Color getFloorColor() {
-        return floorColor;
-    }
+	 /**
+	  * @return the floorColor
+	  */
+	 public Color getFloorColor() {
+		 return floorColor;
+	 }
 
-    /**
-     * @param floorColor the floorColor to set
-     */
-    public void setFloorColor(Color floorColor) {
-        this.floorColor = floorColor;
-    }
+	 /**
+	  * @param floorColor the floorColor to set
+	  */
+	 public void setFloorColor(Color floorColor) {
+		 this.floorColor = floorColor;
+	 }
 }
