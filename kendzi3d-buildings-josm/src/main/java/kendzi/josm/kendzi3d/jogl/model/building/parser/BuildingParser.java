@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+//import kendzi.josm.kendzi3d.jogl.model.NewBuilding;
 import kendzi.josm.kendzi3d.jogl.model.building.model.BuildingModel;
 import kendzi.josm.kendzi3d.jogl.model.building.model.BuildingPart;
 import kendzi.josm.kendzi3d.jogl.model.building.model.BuildingWallElement;
@@ -35,6 +36,7 @@ import kendzi.kendzi3d.josm.model.polygon.PolygonWithHolesUtil.AreaWithHoles;
 import kendzi.kendzi3d.josm.model.polygon.ReversableWay;
 import kendzi.util.StringUtil;
 
+import org.apache.log4j.Logger;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
@@ -44,468 +46,473 @@ import org.openstreetmap.josm.data.osm.Way;
 
 public class BuildingParser {
 
-    /**
-     * Parse building model from multipolygon.
-     *
-     * @param pRelation
-     * @param pers
-     * @return
-     */
-    public static BuildingModel parseBuildingMultiPolygon(Relation pRelation, Perspective pers) {
-        if (!pRelation.isMultipolygon()) {
-            throw new IllegalArgumentException("for multipolygon relations!");
-        }
-
-        BuildingModel bm = new BuildingModel();
-        List<BuildingPart> bps = new ArrayList<BuildingPart>();
-        bm.setParts(bps);
-
-        List<BuildingPart> bp = parseBuildingMultiPolygonPart(pRelation, pers);
-        if (bp != null) {
-            bps.addAll(bp);
-        }
-        return bm;
-    }
-
-    /**
-     * Parse building model from multipolygon.
-     *
-     * @param pRelation
-     * @param pPerspective
-     * @return
-     */
-    static List<BuildingPart> parseBuildingMultiPolygonPart(Relation pRelation, Perspective pPerspective) {
-
-        List<AreaWithHoles> waysPolygon = PolygonWithHolesUtil.findAreaWithHoles(pRelation);
-
-        List<BuildingPart> ret = new ArrayList<BuildingPart>();
-
-        for (AreaWithHoles waysPolygon2 : waysPolygon) {
-            BuildingPart bp = parseBuildingPartAttributes(pRelation);
-
-            // DormerRoofModel roofClosedWay = RoofParser.parse(p,
-            // pPerspective);
-            // bp.setRoof(marge(roof, roofClosedWay));
-            bp.setRoof(RoofParser.parse(pRelation, pPerspective));
-
-            bp.setWall(parseWall(waysPolygon2.getOuter(), pPerspective));
-
-            if (waysPolygon2.getInner() != null) {
-                List<Wall> innerWall = new ArrayList<Wall>();
-                for (List<ReversableWay> rwList : waysPolygon2.getInner()) {
-                    innerWall.add(parseWall(rwList, pPerspective));
-                }
-                bp.setInlineWalls(innerWall);
-            }
-
-            ret.add(bp);
-
-        }
-
-        return ret;
-    }
-
-    /**
-     * @param pOsmPrimitive
-     * @return
-     */
-    public static BuildingPart parseBuildingPartAttributes(OsmPrimitive pOsmPrimitive) {
-        BuildingPart bp = new BuildingPart();
-        bp.setMaxHeight(BuildingAttributeParser.parseMaxHeight(pOsmPrimitive));
-        bp.setMinHeight(BuildingAttributeParser.parseMinHeight(pOsmPrimitive));
-        bp.setMaxLevel(BuildingAttributeParser.parseMaxLevel(pOsmPrimitive));
-        bp.setRoofLevels(BuildingAttributeParser.parseRoofLevels(pOsmPrimitive));
-        bp.setMinLevel(BuildingAttributeParser.parseMinLevel(pOsmPrimitive));
-
-        bp.setFacadeMaterialType(BuildingAttributeParser.parseFacadeMaterialName(pOsmPrimitive));
-        bp.setFacadeColor(BuildingAttributeParser.parseFacadeColor(pOsmPrimitive));
-
-        bp.setFloorMaterialType(BuildingAttributeParser.parseFloorMaterialName(pOsmPrimitive));
-        bp.setFloorColor(BuildingAttributeParser.parseFloorColor(pOsmPrimitive));
-
-        bp.setRoofMaterialType(BuildingAttributeParser.parseRoofMaterialName(pOsmPrimitive));
-        bp.setRoofColor(BuildingAttributeParser.parseRoofColor(pOsmPrimitive));
-        return bp;
-    }
-
-    /**
-     * Parse building model from way.
-     *
-     * @param way
-     * @param perspective
-     * @return
-     */
-    public static BuildingModel parseBuildingWay(Way way, Perspective perspective) {
-        BuildingModel bm = new BuildingModel();
-        bm.setParts(parseBuildingPart(way, perspective));
-        return bm;
-    }
-
-    /**
-     * Parse building model from node.
-     *
-     * @param node
-     * @param perspective
-     * @return
-     */
-    public static BuildingModel parseBuildingNode(Node node, Perspective perspective) {
-        BuildingModel bm = new BuildingModel();
-        bm.setNodeParts(parseBuildingPart(node, perspective));
-        return bm;
-    }
-
-    /**
-     * Parse building model from relation.
-     *
-     * @param pRelation
-     * @param pers
-     * @return
-     */
-    public static BuildingModel parseBuildingRelation(Relation pRelation, Perspective pers) {
-        // TODO for relation type=building !
-        BuildingType bt = BuildingType.OUTLINE;
-        if (isRelationHaveBuildingParts(pRelation)) {
-            bt = BuildingType.PARTS;
-        }
-
-        BuildingModel bm = new BuildingModel();
-        List<BuildingPart> bps = new ArrayList<BuildingPart>();
-        bm.setParts(bps);
-
-        List<NodeBuildingPart> nbps = new ArrayList<NodeBuildingPart>();
-        bm.setNodeParts(nbps);
-
-        for (int i = 0; i < pRelation.getMembersCount(); i++) {
-            RelationMember member = pRelation.getMember(i);
-
-            OsmPrimitive primitive = member.getMember();
-
-            if (BuildingType.OUTLINE.equals(bt) && !OsmAttributeKeys.BUILDING.primitiveKeyHaveAnyValue(member.getMember())) {
-                continue;
-            } else if (BuildingType.PARTS.equals(bt)
-                    && !isPrimitiveBuildingPart(member.getMember())) {
-                continue;
-            }
-
-            if (primitive instanceof Way) {
-                bps.addAll(parseBuildingPart((Way) primitive, pers));
-            } else if (primitive instanceof Node && isNodeBuildingPart((Node) primitive)) {
-                nbps.addAll(parseBuildingPart((Node) primitive, pers));
-
-            } else if (primitive instanceof Relation) {
-                Relation r = (Relation) primitive;
-                if (r.isMultipolygon()) {
-                    List<BuildingPart> bp = parseBuildingMultiPolygonPart((Relation) primitive, pers);
-                    if (bp != null) {
-                        bps.addAll(bp);
-                    }
-                }
-            }
-        }
-        return bm;
-    }
-
-    /**
-     * @param osmPrimitive
-     * @return
-     */
-    private static boolean isPrimitiveBuildingPart(OsmPrimitive osmPrimitive) {
-        return OsmAttributeKeys.BUILDING_PART.primitiveKeyHaveAnyValue(osmPrimitive)
-                && !OsmAttributeKeys.BUILDING_PART.primitiveKeyHaveValue(osmPrimitive, OsmAttributeValues.NO);
-    }
-
-    private static boolean isNodeBuildingPart(Node node) {
-
-        if (isPrimitiveBuildingPart(node)
-                && OsmAttributeKeys.BUILDING_SHAPE.primitiveKeyHaveValue(node, OsmAttributeValues.SPHERE)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private DormerRoofModel marge(DormerRoofModel roof, DormerRoofModel roofClosedWay) {
-        // TODO
-        if (roof.getRoofType() == null) {
-            roof.setRoofType(roofClosedWay.getRoofType());
-        }
-        if (roof.getRoofTypeParameter() == null) {
-            roof.setRoofTypeParameter(roofClosedWay.getRoofTypeParameter());
-        }
-        if (roof.getDirection() == null) {
-            roof.setDirection(roofClosedWay.getDirection());
-        }
-        if (roof.getOrientation() == null) {
-            roof.setOrientation(roofClosedWay.getOrientation());
-        }
-
-        return roof;
-    }
-
-    private static BuildingPart cloneBuildingPart(BuildingPart bp, Double height) {
-        BuildingPart ret = new BuildingPart();
-        if (bp.getMaxHeight() == null) {
-            ret.setMaxHeight(bp.getDefaultMaxHeight() + height);
-        } else {
-            ret.setMaxHeight(bp.getMaxHeight() + height);
-        }
-
-        if (bp.getMinHeight() == null) {
-            ret.setMinHeight(bp.getDefaultMinHeight() + height);
-        } else {
-            ret.setMinHeight(bp.getMinHeight() + height);
-        }
-
-
-
-        ret.setFacadeColor(bp.getFacadeColor());
-
-        ret.setFacadeMaterialType(bp.getFacadeMaterialType());
-
-        ret.setFloorColor(bp.getFloorColor());
-        ret.setFloorMaterialType(bp.getFloorMaterialType());
-
-        ret.setInlineWalls(bp.getInlineWalls());
-        ret.setLevelHeight(bp.getLevelHeight());
-
-        ret.setMaxLevel(bp.getMaxLevel());
-        ret.setMinLevel(bp.getMinLevel());
-
-        ret.setRoof(bp.getRoof());
-        ret.setRoofColor(bp.getRoofColor());
-        ret.setRoofLevels(bp.getRoofLevels());
-        ret.setRoofMaterialType(bp.getRoofMaterialType());
-
-        ret.setWall(bp.getWall());
-
-        return ret;
-    }
-
-    enum BuildingType {
-        OUTLINE, PARTS
-    }
-
-    private static boolean isRelationHaveBuildingParts(Relation pRelation) {
-
-        boolean haveParts = false;
-        for (int i = 0; i < pRelation.getMembersCount(); i++) {
-            RelationMember member = pRelation.getMember(i);
-
-            if (isPrimitiveBuildingPart(member.getMember())) {
-                haveParts = true;
-                break;
-            }
-        }
+	/**
+	 * Parse building model from multipolygon.
+	 *
+	 * @param pRelation
+	 * @param pers
+	 * @return
+	 */
+	public static BuildingModel parseBuildingMultiPolygon(Relation pRelation, Perspective pers) {
+		if (!pRelation.isMultipolygon()) {
+			throw new IllegalArgumentException("for multipolygon relations!");
+		}
+
+		BuildingModel bm = new BuildingModel();
+		List<BuildingPart> bps = new ArrayList<BuildingPart>();
+		bm.setParts(bps);
+
+		List<BuildingPart> bp = parseBuildingMultiPolygonPart(pRelation, pers);
+		if (bp != null) {
+			bps.addAll(bp);
+		}
+		return bm;
+	}
+
+	/**
+	 * Parse building model from multipolygon.
+	 *
+	 * @param pRelation
+	 * @param pPerspective
+	 * @return
+	 */
+	static List<BuildingPart> parseBuildingMultiPolygonPart(Relation pRelation, Perspective pPerspective) {
+
+		List<AreaWithHoles> waysPolygon = PolygonWithHolesUtil.findAreaWithHoles(pRelation);
+
+		List<BuildingPart> ret = new ArrayList<BuildingPart>();
+
+		for (AreaWithHoles waysPolygon2 : waysPolygon) {
+			BuildingPart bp = parseBuildingPartAttributes(pRelation);
+
+			// DormerRoofModel roofClosedWay = RoofParser.parse(p,
+			// pPerspective);
+			// bp.setRoof(marge(roof, roofClosedWay));
+			bp.setRoof(RoofParser.parse(pRelation, pPerspective));
+
+			bp.setWall(parseWall(waysPolygon2.getOuter(), pPerspective));
+
+			if (waysPolygon2.getInner() != null) {
+				List<Wall> innerWall = new ArrayList<Wall>();
+				for (List<ReversableWay> rwList : waysPolygon2.getInner()) {
+					innerWall.add(parseWall(rwList, pPerspective));
+				}
+				bp.setInlineWalls(innerWall);
+			}
+
+			ret.add(bp);
+
+		}
+
+		return ret;
+	}
+
+	/**
+	 * @param pOsmPrimitive
+	 * @return
+	 */
+	public static BuildingPart parseBuildingPartAttributes(OsmPrimitive pOsmPrimitive) {
+		BuildingPart bp = new BuildingPart();
+		bp.setMaxHeight(BuildingAttributeParser.parseMaxHeight(pOsmPrimitive));
+		bp.setMinHeight(BuildingAttributeParser.parseMinHeight(pOsmPrimitive));
+		bp.setMaxLevel(BuildingAttributeParser.parseMaxLevel(pOsmPrimitive));
+		bp.setRoofLevels(BuildingAttributeParser.parseRoofLevels(pOsmPrimitive));
+		bp.setMinLevel(BuildingAttributeParser.parseMinLevel(pOsmPrimitive));
+
+		bp.setFacadeMaterialType(BuildingAttributeParser.parseFacadeMaterialName(pOsmPrimitive));
+		bp.setFacadeColor(BuildingAttributeParser.parseFacadeColor(pOsmPrimitive));
+
+		bp.setFloorMaterialType(BuildingAttributeParser.parseFloorMaterialName(pOsmPrimitive));
+		bp.setFloorColor(BuildingAttributeParser.parseFloorColor(pOsmPrimitive));
+
+		bp.setRoofMaterialType(BuildingAttributeParser.parseRoofMaterialName(pOsmPrimitive));
+		bp.setRoofColor(BuildingAttributeParser.parseRoofColor(pOsmPrimitive));
+		return bp;
+	}
+
+
+
+	/**
+	 * Parse building model from way.
+	 *
+	 * @param way
+	 * @param perspective
+	 * @return
+	 */
+
+	public static BuildingModel parseBuildingWay(Way way, Perspective perspective) { 
+		BuildingModel bm = new BuildingModel();
+		bm.setParts(parseBuildingPart(way, perspective));
+
+		return bm;
+	}
+	
+
+	/**
+	 * Parse building model from node.
+	 *
+	 * @param node
+	 * @param perspective
+	 * @return
+	 */
+	public static BuildingModel parseBuildingNode(Node node, Perspective perspective) {
+		BuildingModel bm = new BuildingModel();
+		bm.setNodeParts(parseBuildingPart(node, perspective));
+		return bm;
+	}
+
+	/**
+	 * Parse building model from relation.
+	 *
+	 * @param pRelation
+	 * @param pers
+	 * @return
+	 */
+	public static BuildingModel parseBuildingRelation(Relation pRelation, Perspective pers) {
+		// TODO for relation type=building !
+		BuildingType bt = BuildingType.OUTLINE;
+		if (isRelationHaveBuildingParts(pRelation)) {
+			bt = BuildingType.PARTS;
+		}
+
+		BuildingModel bm = new BuildingModel();
+		List<BuildingPart> bps = new ArrayList<BuildingPart>();
+		bm.setParts(bps);
+
+		List<NodeBuildingPart> nbps = new ArrayList<NodeBuildingPart>();
+		bm.setNodeParts(nbps);
+
+		for (int i = 0; i < pRelation.getMembersCount(); i++) {
+			RelationMember member = pRelation.getMember(i);
+
+			OsmPrimitive primitive = member.getMember();
+
+			if (BuildingType.OUTLINE.equals(bt) && !OsmAttributeKeys.BUILDING.primitiveKeyHaveAnyValue(member.getMember())) {
+				continue;
+			} else if (BuildingType.PARTS.equals(bt)
+					&& !isPrimitiveBuildingPart(member.getMember())) {
+				continue;
+			}
+
+			if (primitive instanceof Way) {
+				bps.addAll(parseBuildingPart((Way) primitive, pers));
+			} else if (primitive instanceof Node && isNodeBuildingPart((Node) primitive)) {
+				nbps.addAll(parseBuildingPart((Node) primitive, pers));
+
+			} else if (primitive instanceof Relation) {
+				Relation r = (Relation) primitive;
+				if (r.isMultipolygon()) {
+					List<BuildingPart> bp = parseBuildingMultiPolygonPart((Relation) primitive, pers);
+					if (bp != null) {
+						bps.addAll(bp);
+					}
+				}
+			}
+		}
+		return bm;
+	}
+
+	/**
+	 * @param osmPrimitive
+	 * @return
+	 */
+	private static boolean isPrimitiveBuildingPart(OsmPrimitive osmPrimitive) {
+		return OsmAttributeKeys.BUILDING_PART.primitiveKeyHaveAnyValue(osmPrimitive)
+				&& !OsmAttributeKeys.BUILDING_PART.primitiveKeyHaveValue(osmPrimitive, OsmAttributeValues.NO);
+	}
+
+	private static boolean isNodeBuildingPart(Node node) {
+
+		if (isPrimitiveBuildingPart(node)
+				&& OsmAttributeKeys.BUILDING_SHAPE.primitiveKeyHaveValue(node, OsmAttributeValues.SPHERE)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private DormerRoofModel marge(DormerRoofModel roof, DormerRoofModel roofClosedWay) {
+		// TODO
+		if (roof.getRoofType() == null) {
+			roof.setRoofType(roofClosedWay.getRoofType());
+		}
+		if (roof.getRoofTypeParameter() == null) {
+			roof.setRoofTypeParameter(roofClosedWay.getRoofTypeParameter());
+		}
+		if (roof.getDirection() == null) {
+			roof.setDirection(roofClosedWay.getDirection());
+		}
+		if (roof.getOrientation() == null) {
+			roof.setOrientation(roofClosedWay.getOrientation());
+		}
+
+		return roof;
+	}
+
+	private static BuildingPart cloneBuildingPart(BuildingPart bp, Double height) {
+		BuildingPart ret = new BuildingPart();
+		if (bp.getMaxHeight() == null) {
+			ret.setMaxHeight(bp.getDefaultMaxHeight() + height);
+		} else {
+			ret.setMaxHeight(bp.getMaxHeight() + height);
+		}
+
+		if (bp.getMinHeight() == null) {
+			ret.setMinHeight(bp.getDefaultMinHeight() + height);
+		} else {
+			ret.setMinHeight(bp.getMinHeight() + height);
+		}
+
+
+
+		ret.setFacadeColor(bp.getFacadeColor());
+
+		ret.setFacadeMaterialType(bp.getFacadeMaterialType());
+
+		ret.setFloorColor(bp.getFloorColor());
+		ret.setFloorMaterialType(bp.getFloorMaterialType());
+
+		ret.setInlineWalls(bp.getInlineWalls());
+		ret.setLevelHeight(bp.getLevelHeight());
+
+		ret.setMaxLevel(bp.getMaxLevel());
+		ret.setMinLevel(bp.getMinLevel());
+
+		ret.setRoof(bp.getRoof());
+		ret.setRoofColor(bp.getRoofColor());
+		ret.setRoofLevels(bp.getRoofLevels());
+		ret.setRoofMaterialType(bp.getRoofMaterialType());
+
+		ret.setWall(bp.getWall());
+
+		return ret;
+	}
+
+	enum BuildingType {
+		OUTLINE, PARTS
+	}
+
+	private static boolean isRelationHaveBuildingParts(Relation pRelation) {
+
+		boolean haveParts = false;
+		for (int i = 0; i < pRelation.getMembersCount(); i++) {
+			RelationMember member = pRelation.getMember(i);
+
+			if (isPrimitiveBuildingPart(member.getMember())) {
+				haveParts = true;
+				break;
+			}
+		}
+
+		return haveParts;
+	}
+
+	private static Wall parseWall(Way way, Perspective pPerspective) {
+		Wall wall = new Wall();
+
+		WallPart wp = parseWallPart(new ReversableWay(way, false), pPerspective);
+
+		wall.setWallParts(Arrays.asList(wp));
+
+		return wall;
+	}
+
+	static Double parseWidth(OsmPrimitive primitive, Double defaultValue) {
+		return ModelUtil.parseHeight(primitive.get("width"), defaultValue);
+	}
+
+	static boolean isClosedWay(RelationMember member) {
+		if (OsmPrimitiveType.WAY.equals(member.getType()) && (member.getWay().isClosed())) {
+			return true;
+		}
+		return false;
+	}
+
+	private static List<NodeBuildingPart> parseBuildingPart(Node node, Perspective pPerspective) {
+		SphereNodeBuildingPart bp = new SphereNodeBuildingPart();
+
+		bp.setPoint(pPerspective.calcPoint(node));
+		bp.setHeight(ModelUtil.getHeight(node, 0d));
+		bp.setRadius(ModelUtil.parseHeight(node.get("radius"), 1d));
+		bp.setFacadeMaterialType(BuildingAttributeParser.parseFacadeMaterialName(node));
+		bp.setFacadeColor(BuildingAttributeParser.parseFacadeColor(node));
+		
 
-        return haveParts;
-    }
+		return Arrays.asList((NodeBuildingPart) bp);
+	}
 
-    private static Wall parseWall(Way way, Perspective pPerspective) {
-        Wall wall = new Wall();
+	private static List<BuildingPart> parseBuildingPart(Way primitive, Perspective pPerspective) {
 
-        WallPart wp = parseWallPart(new ReversableWay(way, false), pPerspective);
+		if (!primitive.isClosed()) {
+			throw new RuntimeException("Way is not closed: " + primitive);
+		}
 
-        wall.setWallParts(Arrays.asList(wp));
+		OsmPrimitive p = primitive;
+		BuildingPart bp = parseBuildingPartAttributes(p);
 
-        return wall;
-    }
+		bp.setWall(parseWall((Way) p, pPerspective));
+		bp.setInlineWalls(null);
 
-    static Double parseWidth(OsmPrimitive primitive, Double defaultValue) {
-        return ModelUtil.parseHeight(primitive.get("width"), defaultValue);
-    }
-
-    static boolean isClosedWay(RelationMember member) {
-        if (OsmPrimitiveType.WAY.equals(member.getType()) && (member.getWay().isClosed())) {
-            return true;
-        }
-        return false;
-    }
+		bp.setRoof(RoofParser.parse(primitive, pPerspective));
 
-    private static List<NodeBuildingPart> parseBuildingPart(Node node, Perspective pPerspective) {
-        SphereNodeBuildingPart bp = new SphereNodeBuildingPart();
+		List<BuildingPart> bpList = new ArrayList<BuildingPart>();
+		bpList.add(bp);
 
-        bp.setPoint(pPerspective.calcPoint(node));
-        bp.setHeight(ModelUtil.getHeight(node, 0d));
-        bp.setRadius(ModelUtil.parseHeight(node.get("radius"), 1d));
-        bp.setFacadeMaterialType(BuildingAttributeParser.parseFacadeMaterialName(node));
-        bp.setFacadeColor(BuildingAttributeParser.parseFacadeColor(node));
+		bpList.addAll(parseRelationClone(primitive, bp));
 
-        return Arrays.asList((NodeBuildingPart) bp);
-    }
+		return bpList;
+	}
 
-    private static List<BuildingPart> parseBuildingPart(Way primitive, Perspective pPerspective) {
+	private static List<BuildingPart> parseRelationClone(Way primitive, BuildingPart bp) {
+		List<RelationCloneHeight> buildHeightClone = RelationCloneHeight.buildHeightClone(primitive);
+		List<BuildingPart> bpList = new ArrayList<BuildingPart>();
 
-        if (!primitive.isClosed()) {
-            throw new RuntimeException("Way is not closed: " + primitive);
-        }
+		for (RelationCloneHeight relationCloneHeight : buildHeightClone) {
+			for (Double height : relationCloneHeight) {
 
-        OsmPrimitive p = primitive;
+				bpList.add(cloneBuildingPart(bp, height));
+			}
+		}
+		return bpList;
+	}
 
-        BuildingPart bp = parseBuildingPartAttributes(p);
+	private static Wall parseWall(List<ReversableWay> rwList, Perspective pPerspective) {
+		Wall wall = new Wall();
+		List<WallPart> wp = new ArrayList<WallPart>();
+		for (ReversableWay rw : rwList) {
+			wp.add(parseWallPart(rw, pPerspective));
+		}
 
-        bp.setWall(parseWall((Way) p, pPerspective));
-        bp.setInlineWalls(null);
+		wall.setWallParts(wp);
 
-        bp.setRoof(RoofParser.parse(primitive, pPerspective));
+		return wall;
+	}
 
-        List<BuildingPart> bpList = new ArrayList<BuildingPart>();
-        bpList.add(bp);
+	private static WallPart parseWallPart(ReversableWay rw, Perspective pPerspective) {
 
-        bpList.addAll(parseRelationClone(primitive, bp));
+		Way way = rw.getWay();
 
-        return bpList;
-    }
+		WallPart wp = new WallPart();
 
-    private static List<BuildingPart> parseRelationClone(Way primitive, BuildingPart bp) {
-        List<RelationCloneHeight> buildHeightClone = RelationCloneHeight.buildHeightClone(primitive);
-        List<BuildingPart> bpList = new ArrayList<BuildingPart>();
+		List<WallNode> wnList = new ArrayList<WallNode>();
 
-        for (RelationCloneHeight relationCloneHeight : buildHeightClone) {
-            for (Double height : relationCloneHeight) {
+		if (!rw.isReversed()) {
 
-                bpList.add(cloneBuildingPart(bp, height));
-            }
-        }
-        return bpList;
-    }
+			for (int i = 0; i < way.getNodesCount(); i++) {
 
-    private static Wall parseWall(List<ReversableWay> rwList, Perspective pPerspective) {
-        Wall wall = new Wall();
-        List<WallPart> wp = new ArrayList<WallPart>();
-        for (ReversableWay rw : rwList) {
-            wp.add(parseWallPart(rw, pPerspective));
-        }
+				WallNode wn = parseWallNode(way.getNode(i), pPerspective);
 
-        wall.setWallParts(wp);
+				wnList.add(wn);
+			}
+		} else {
 
-        return wall;
-    }
+			for (int i = way.getNodesCount() - 1; i >= 0; i--) {
 
-    private static WallPart parseWallPart(ReversableWay rw, Perspective pPerspective) {
+				WallNode wn = parseWallNode(way.getNode(i), pPerspective);
 
-        Way way = rw.getWay();
+				wnList.add(wn);
+			}
+		}
+		wp.setNodes(wnList);
+		wp.setBuildingElements(parseBuildingAttributeWallElement(way));
 
-        WallPart wp = new WallPart();
+		// String parseFacadeName =
+				// BuildingAttributeParser.parseFacadeMaterialName(w);
+		// wp.setFacadeTextureData(BuildingAttributeParser.parseFacadeTexture(parseFacadeName,
+				// this.textureLibraryService));
+		// wp.setColor(BuildingAttributeParser.parseFacadeColor(w));
 
-        List<WallNode> wnList = new ArrayList<WallNode>();
+		wp.setFacadeMaterialType(BuildingAttributeParser.parseFacadeMaterialName(way));
+		wp.setFacadeColor(BuildingAttributeParser.parseFacadeColor(way));
 
-        if (!rw.isReversed()) {
+		wp.setRoofMaterialType(BuildingAttributeParser.parseRoofMaterialName(way));
+		wp.setRoofColor(BuildingAttributeParser.parseRoofColor(way));
 
-            for (int i = 0; i < way.getNodesCount(); i++) {
+		return wp;
+	}
 
-                WallNode wn = parseWallNode(way.getNode(i), pPerspective);
+	private static List<BuildingWallElement> parseBuildingAttributeWallElement(Way w) {
 
-                wnList.add(wn);
-            }
-        } else {
+		List<BuildingWallElement> ret = new ArrayList<BuildingWallElement>();
 
-            for (int i = way.getNodesCount() - 1; i >= 0; i--) {
+		WindowGridBuildingElement wgbe = BuildingAttributeParser.parseWallWindowsColumns(w);
+		if (wgbe != null) {
+			ret.add(wgbe);
+		}
 
-                WallNode wn = parseWallNode(way.getNode(i), pPerspective);
+		return ret;
+	}
 
-                wnList.add(wn);
-            }
-        }
-        wp.setNodes(wnList);
-        wp.setBuildingElements(parseBuildingAttributeWallElement(way));
+	private static WallNode parseWallNode(Node node, Perspective pPerspective) {
+		WallNode wn = new WallNode();
+		wn.setPoint(pPerspective.calcPoint(node));
 
-        // String parseFacadeName =
-        // BuildingAttributeParser.parseFacadeMaterialName(w);
-        // wp.setFacadeTextureData(BuildingAttributeParser.parseFacadeTexture(parseFacadeName,
-        // this.textureLibraryService));
-        // wp.setColor(BuildingAttributeParser.parseFacadeColor(w));
+		List<BuildingNodeElement> buildingElements = new ArrayList<BuildingNodeElement>();
+		wn.setBuildingNodeElements(buildingElements);
 
-        wp.setFacadeMaterialType(BuildingAttributeParser.parseFacadeMaterialName(way));
-        wp.setFacadeColor(BuildingAttributeParser.parseFacadeColor(way));
+		List<RelationCloneHeight> buildHeightClone = RelationCloneHeight.buildHeightClone(node);
 
-        wp.setRoofMaterialType(BuildingAttributeParser.parseRoofMaterialName(way));
-        wp.setRoofColor(BuildingAttributeParser.parseRoofColor(way));
+		if (isAttribute(node, OsmAttributeKeys.BUILDING, OsmAttributeValues.ENTRANCE)
+				|| isAnyAttribute(node, OsmAttributeKeys.ENTRANCE)) {
 
-        return wp;
-    }
+			EntranceBuildingElement entrance = new EntranceBuildingElement();
+			entrance.setHeight(ModelUtil.getHeight(node, entrance.getHeight()));
+			entrance.setMinHeight(ModelUtil.getMinHeight(node, entrance.getMinHeight()));
+			entrance.setWidth(parseWidth(node, entrance.getWidth()));
 
-    private static List<BuildingWallElement> parseBuildingAttributeWallElement(Way w) {
+			buildingElements.add(entrance);
 
-        List<BuildingWallElement> ret = new ArrayList<BuildingWallElement>();
+			for (RelationCloneHeight rch : buildHeightClone) {
+				for (Double cloner : rch) {
 
-        WindowGridBuildingElement wgbe = BuildingAttributeParser.parseWallWindowsColumns(w);
-        if (wgbe != null) {
-            ret.add(wgbe);
-        }
+					EntranceBuildingElement beClone = (EntranceBuildingElement) clone(entrance);
 
-        return ret;
-    }
+					beClone.setMinHeight(beClone.getMinHeight() + cloner);
+					buildingElements.add(beClone);
+				}
+			}
 
-    private static WallNode parseWallNode(Node node, Perspective pPerspective) {
-        WallNode wn = new WallNode();
-        wn.setPoint(pPerspective.calcPoint(node));
+		}
 
-        List<BuildingNodeElement> buildingElements = new ArrayList<BuildingNodeElement>();
-        wn.setBuildingNodeElements(buildingElements);
+		if (isAttribute(node, OsmAttributeKeys.BUILDING, OsmAttributeValues.WINDOW)) {
 
-        List<RelationCloneHeight> buildHeightClone = RelationCloneHeight.buildHeightClone(node);
+			WindowBuildingElement entrance = new WindowBuildingElement();
+			entrance.setHeight(ModelUtil.getHeight(node, entrance.getHeight()));
+			entrance.setMinHeight(ModelUtil.getMinHeight(node, entrance.getMinHeight()));
 
-        if (isAttribute(node, OsmAttributeKeys.BUILDING, OsmAttributeValues.ENTRANCE)
-                || isAnyAttribute(node, OsmAttributeKeys.ENTRANCE)) {
+			entrance.setWidth(parseWidth(node, entrance.getWidth()));
 
-            EntranceBuildingElement entrance = new EntranceBuildingElement();
-            entrance.setHeight(ModelUtil.getHeight(node, entrance.getHeight()));
-            entrance.setMinHeight(ModelUtil.getMinHeight(node, entrance.getMinHeight()));
-            entrance.setWidth(parseWidth(node, entrance.getWidth()));
+			buildingElements.add(entrance);
 
-            buildingElements.add(entrance);
+			for (RelationCloneHeight rch : buildHeightClone) {
+				for (Double cloner : rch) {
 
-            for (RelationCloneHeight rch : buildHeightClone) {
-                for (Double cloner : rch) {
+					WindowBuildingElement beClone = (WindowBuildingElement) clone(entrance);
 
-                    EntranceBuildingElement beClone = (EntranceBuildingElement) clone(entrance);
+					beClone.setMinHeight(beClone.getMinHeight() + cloner);
+					buildingElements.add(beClone);
+				}
 
-                    beClone.setMinHeight(beClone.getMinHeight() + cloner);
-                    buildingElements.add(beClone);
-                }
-            }
+			}
 
-        }
+		}
 
-        if (isAttribute(node, OsmAttributeKeys.BUILDING, OsmAttributeValues.WINDOW)) {
+		return wn;
+	}
 
-            WindowBuildingElement entrance = new WindowBuildingElement();
-            entrance.setHeight(ModelUtil.getHeight(node, entrance.getHeight()));
-            entrance.setMinHeight(ModelUtil.getMinHeight(node, entrance.getMinHeight()));
+	private static BuildingNodeElement clone(BuildingNodeElement entrance) {
+		try {
+			return (WindowBuildingElement) entrance.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException("error cloning WindowBuildingElement", e);
+		}
+	}
 
-            entrance.setWidth(parseWidth(node, entrance.getWidth()));
+	private static boolean isAttribute(OsmPrimitive prim, OsmAttributeKeys key, OsmAttributeValues val) {
+		return val.getValue().equals(prim.get(key.getKey()));
+	}
 
-            buildingElements.add(entrance);
-
-            for (RelationCloneHeight rch : buildHeightClone) {
-                for (Double cloner : rch) {
-
-                    WindowBuildingElement beClone = (WindowBuildingElement) clone(entrance);
-
-                    beClone.setMinHeight(beClone.getMinHeight() + cloner);
-                    buildingElements.add(beClone);
-                }
-
-            }
-
-        }
-
-        return wn;
-    }
-
-    private static BuildingNodeElement clone(BuildingNodeElement entrance) {
-        try {
-            return (WindowBuildingElement) entrance.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException("error cloning WindowBuildingElement", e);
-        }
-    }
-
-    private static boolean isAttribute(OsmPrimitive prim, OsmAttributeKeys key, OsmAttributeValues val) {
-        return val.getValue().equals(prim.get(key.getKey()));
-    }
-
-    private static boolean isAnyAttribute(OsmPrimitive prim, OsmAttributeKeys key) {
-        return !StringUtil.isBlankOrNull(prim.get(key.getKey()));
-    }
+	private static boolean isAnyAttribute(OsmPrimitive prim, OsmAttributeKeys key) {
+		return !StringUtil.isBlankOrNull(prim.get(key.getKey()));
+	}
 }

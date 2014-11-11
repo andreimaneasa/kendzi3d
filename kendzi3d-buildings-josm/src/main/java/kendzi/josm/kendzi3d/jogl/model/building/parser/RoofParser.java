@@ -109,6 +109,11 @@ public class RoofParser {
             if (roofHeight == null) {
                 roofHeight = ModelUtil.parseHeight(OsmAttributeKeys.BUILDING_ROOF_HEIGHT.primitiveValue(primitive), null);
             }
+            
+            Double roofTypeHeight = ModelUtil.parseHeight(OsmAttributeKeys.ROOF_TYPE_HEIGHT.primitiveValue(primitive), null);
+            if (roofTypeHeight == null) {
+            	roofTypeHeight = ModelUtil.parseHeight(OsmAttributeKeys.BUILDING_ROOF_TYPE_HEIGHT.primitiveValue(primitive), null);
+            }
 
             Double roofAngle = ModelUtil.getNumberAttribute(primitive, OsmAttributeKeys.ROOF_ANGLE.getKey(), null);
 
@@ -116,7 +121,10 @@ public class RoofParser {
                 measurements.put(MeasurementKey.HEIGHT_1, new Measurement(roofHeight, MeasurementUnit.METERS));
             } else if (roofAngle != null) {
                 measurements.put(MeasurementKey.HEIGHT_1, new Measurement(roofAngle, MeasurementUnit.DEGREES));
+            }else if (roofTypeHeight != null) {
+                measurements.put(MeasurementKey.HEIGHT_5, new Measurement(roofTypeHeight, MeasurementUnit.METERS));
             }
+           
 
         }
 
