@@ -12,7 +12,7 @@
 	
 	<!-- Buildings facades -->
 	<textureSet key="buildings.facade_unknown">
-		<textureData tex0="/textures/building_facade_unknown.png" height="2.0" width="2.0"/>
+		<textureData tex0="/textures/----" height="2.0" width="2.0"/> <!--  remote building_facade_unknown.png in this way remains default image meaning white-->
 	</textureSet>
 	<textureSet key="buildings.facade_plaster">
 		<textureData tex0="/textures/building_facade_plaster.png" height="2.0" width="2.0"/>
@@ -70,7 +70,7 @@
 		 
 	<!-- Buildings roofs -->
 	<textureSet key="buildings.roof_unknown">
-		<textureData tex0="/textures/building_roof_material_unknown.png" height="2" width="2"/>
+		<textureData tex0="/textures/white.png" height="2" width="2"/> <!--  aici am taiat  building_roof_material_unknown.png  ca sa ramana default adica alb-->
 	</textureSet>
 	<textureSet key="buildings.roof_roof_tiles">
 		<textureData tex0="/textures/building_roof_material_roofTiles.png" height="3" width="3"/>
