@@ -1,4 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+﻿<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>kendzi3d-plugin-build</artifactId>
@@ -83,12 +83,12 @@
 
 						</manifest>
 						<manifestEntries>
-							<Author>Tomasz Kędziora (kendzi)</Author>
+							<Author>Andrei Maneasa</Author>
 							<Plugin-Class>kendzi.josm.kendzi3d.Kendzi3DPlugin</Plugin-Class>
 							<Plugin-Date />
-							<Plugin-Description>Simple 3D view of osm data. It is highly experimental. It may crash! Use with caution!</Plugin-Description>
+							<Plugin-Description>New description : Simple 3D view of osm data. It is highly experimental. It may crash! Use with caution!</Plugin-Description>
 							<Plugin-Icon>images/stock_3d-effects24.png</Plugin-Icon>
-							<Plugin-Link>http://wiki.openstreetmap.org/index.php/JOSM/Plugins/Kendzi3D</Plugin-Link>
+							<Plugin-Link>https://wiki.openstreetmap.org/wiki/JOSM/Plugins/Improved_Kendzi3D</Plugin-Link>
 							<Plugin-Mainversion>6088</Plugin-Mainversion>
 							<Plugin-Version>${project.version}</Plugin-Version>
 							<Plugin-Requires>log4j;kendzi3d-jogl</Plugin-Requires>
