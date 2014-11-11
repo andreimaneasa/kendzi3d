@@ -28,171 +28,171 @@ import org.apache.log4j.Logger;
  */
 public abstract class ObjectSelectionManager extends ObjectSelectionListener {
 
-    /** Log. */
-    private static final Logger log = Logger.getLogger(ObjectSelectionManager.class);
+	/** Log. */
+	private static final Logger log = Logger.getLogger(ObjectSelectionManager.class);
 
-    private Editor lastActiveEditor;
+	private Editor lastActiveEditor;
 
-    private Ray3d lastSelectRay;
+	private Ray3d lastSelectRay;
 
-    private Selection lastSelection;
+	private Selection lastSelection;
 
-    private Point3d lastClosestPointOnBaseRay;
+	private Point3d lastClosestPointOnBaseRay;
 
-    /**
-     * @param x
-     * @param y
-     * @return
-     */
-    public abstract Ray3d viewportPicking(int x, int y);
+	/**
+	 * @param x
+	 * @param y
+	 * @return
+	 */
+	public abstract Ray3d viewportPicking(int x, int y);
 
-    /**
-     * {@inheritDoc}
-     *
-     * @see kendzi.josm.kendzi3d.jogl.selection.MouseSelectionListener#mouseDragged(java.awt.event.MouseEvent)
-     */
-    @Override
-    public void mouseDragged(MouseEvent e) {
-        if (log.isTraceEnabled()) {
-            log.trace("mouseDragged");
-        }
-        if (moveActiveEditor(e.getX(), e.getY(), false)) {
-            e.consume();
-        }
-    }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @see kendzi.josm.kendzi3d.jogl.selection.MouseSelectionListener#mouseDragged(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseDragged(MouseEvent e) {
+		if (log.isTraceEnabled()) {
+			log.trace("mouseDragged");
+		}
+		if (moveActiveEditor(e.getX(), e.getY(), false)) {
+			e.consume();
+		}
+	}
 
-    // public void onSelectEditor(SelectEditorEvent args) {
-    // this.lastActiveEditor = args.getEditor();
-    // }
+	// public void onSelectEditor(SelectEditorEvent args) {
+	// this.lastActiveEditor = args.getEditor();
+	// }
 
-    /**
-     * @return the activeEditor
-     */
-    public Editor getActiveEditor() {
-        return this.lastActiveEditor;
-    }
+	/**
+	 * @return the activeEditor
+	 */
+	public Editor getActiveEditor() {
+		return this.lastActiveEditor;
+	}
 
-    @Override
-    protected boolean moveActiveEditor(int x, int y, boolean finish) {
+	@Override
+	protected boolean moveActiveEditor(int x, int y, boolean finish) {
 
-        Editor activeEditor = this.lastActiveEditor;
+		Editor activeEditor = this.lastActiveEditor;
 
-        if (activeEditor == null) {
-            return false;
-        }
+		if (activeEditor == null) {
+			return false;
+		}
 
-        if (!(activeEditor instanceof ArrowEditor)) {
-            return false;
-        }
+		if (!(activeEditor instanceof ArrowEditor)) {
+			return false;
+		}
 
-        ArrowEditor arrow = (ArrowEditor) activeEditor;
+		ArrowEditor arrow = (ArrowEditor) activeEditor;
 
-        Ray3d moveRay = viewportPicking(x, y);
+		Ray3d moveRay = viewportPicking(x, y);
 
-        Ray3d arrowRay = new Ray3d(arrow.getEditorOrigin(), arrow.getVector());
-        Point3d closestPointOnBaseRay = Ray3dUtil.closestPointOnBaseRay(moveRay, arrowRay);
+		Ray3d arrowRay = new Ray3d(arrow.getEditorOrigin(), arrow.getVector());
+		Point3d closestPointOnBaseRay = Ray3dUtil.closestPointOnBaseRay(moveRay, arrowRay);
 
-        double height = arrow.getEditorOrigin().distance(closestPointOnBaseRay);
+		double height = arrow.getEditorOrigin().distance(closestPointOnBaseRay);
 
-        this.raiseEditorChange(new ArrowEditorChangeEvent(finish, arrow, height, closestPointOnBaseRay));
+		this.raiseEditorChange(new ArrowEditorChangeEvent(finish, arrow, height, closestPointOnBaseRay));
 
-        this.lastClosestPointOnBaseRay = closestPointOnBaseRay;
+		this.lastClosestPointOnBaseRay = closestPointOnBaseRay;
 
-        return true;
-    }
+		return true;
+	}
 
-    @Override
-    protected void selectActiveEditor(int x, int y) {
+	@Override
+	protected void selectActiveEditor(int x, int y) {
 
-        Ray3d selectRay = viewportPicking(x, y);
+		Ray3d selectRay = viewportPicking(x, y);
 
-        Editor activeEditor = selectActiveEditor(selectRay, this.lastSelection);
+		Editor activeEditor = selectActiveEditor(selectRay, this.lastSelection);
 
-        this.lastActiveEditor = activeEditor;
-        this.lastSelectRay = selectRay;
+		this.lastActiveEditor = activeEditor;
+		this.lastSelectRay = selectRay;
 
-        raiseSelectEditor(new SelectEditorEvent(activeEditor));
-    }
+		raiseSelectEditor(new SelectEditorEvent(activeEditor));
+	}
 
-    protected Editor selectActiveEditor(Ray3d selectRay, Selection selection) {
+	protected Editor selectActiveEditor(Ray3d selectRay, Selection selection) {
 
-        if (selection == null) {
-            return null;
-        }
+		if (selection == null) {
+			return null;
+		}
 
-        List<Editor> editors = selection.getEditors();
+		List<Editor> editors = selection.getEditors();
 
-        Editor selectedEditor = null;
-        double min = Double.MAX_VALUE;
+		Editor selectedEditor = null;
+		double min = Double.MAX_VALUE;
 
-        for (Editor e : editors) {
-            if (e instanceof ArrowEditor) {
-                ArrowEditor ae = (ArrowEditor) e;
+		for (Editor e : editors) {
+			if (e instanceof ArrowEditor) {
+				ArrowEditor ae = (ArrowEditor) e;
 
-                //Double intersect = ae.intersect(selectRay);
-                Double intersect = ae.intersect(selectRay, Editor.SELECTION_ETITOR_CAMERA_RATIO);
+				//Double intersect = ae.intersect(selectRay);
+				Double intersect = ae.intersect(selectRay, Editor.SELECTION_ETITOR_CAMERA_RATIO);
 
-                if (intersect == null) {
-                    continue;
-                }
-                if (intersect < min) {
-                    selectedEditor = e;
-                    min = intersect;
-                }
-            }
-        }
-        return selectedEditor;
-    }
+				if (intersect == null) {
+					continue;
+				}
+				if (intersect < min) {
+					selectedEditor = e;
+					min = intersect;
+				}
+			}
+		}
+		return selectedEditor;
+	}
 
-    @Override
-    protected Selection select(int x, int y) {
+	@Override
+	protected Selection select(int x, int y) {
 
-        Selection selection = null;
+		Selection selection = null;
 
-        Ray3d selectRay = viewportPicking(x, y);
+		Ray3d selectRay = viewportPicking(x, y);
 
-        Editor activeEditor = selectActiveEditor(selectRay, this.lastSelection);
-        if (activeEditor != null) {
-            // activeEditor.select(true);
-            // this.activeEditor = activeEditor;
+		Editor activeEditor = selectActiveEditor(selectRay, this.lastSelection);
+		if (activeEditor != null) {
+			// activeEditor.select(true);
+			// this.activeEditor = activeEditor;
 
-        } else {
+		} else {
 
-            selection = select(selectRay);
-        }
+			selection = select(selectRay);
+		}
 
-        this.lastSelectRay = selectRay;
-        this.lastSelection = selection;
+		this.lastSelectRay = selectRay;
+		this.lastSelection = selection;
 
-        return selection;
-    }
+		return selection;
+	}
 
-    /**
-     * @return the lastClosestPointOnBaseRay
-     */
-    public Point3d getLastClosestPointOnBaseRay() {
-        return lastClosestPointOnBaseRay;
-    }
+	/**
+	 * @return the lastClosestPointOnBaseRay
+	 */
+	public Point3d getLastClosestPointOnBaseRay() {
+		return lastClosestPointOnBaseRay;
+	}
 
-    /**
-     * @return the lastSelectRay
-     */
-    public Ray3d getLastSelectRay() {
-        return lastSelectRay;
-    }
+	/**
+	 * @return the lastSelectRay
+	 */
+	public Ray3d getLastSelectRay() {
+		return lastSelectRay;
+	}
 
-    /**
-     * @return the lastSelection
-     */
-    public Selection getLastSelection() {
-        return lastSelection;
-    }
+	/**
+	 * @return the lastSelection
+	 */
+	public Selection getLastSelection() {
+		return lastSelection;
+	}
 
-    /**
-     * @return the lastActiveEditor
-     */
-    public Editor getLastActiveEditor() {
-        return lastActiveEditor;
-    }
+	/**
+	 * @return the lastActiveEditor
+	 */
+	public Editor getLastActiveEditor() {
+		return lastActiveEditor;
+	}
 
 }

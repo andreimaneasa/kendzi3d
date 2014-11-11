@@ -18,68 +18,73 @@ import kendzi.math.geometry.ray.Ray3d;
 
 import org.apache.log4j.Logger;
 
+
 /**
  *
  * @author Tomasz Kędziora (Kendzi)
  */
-public abstract class MouseSelectionListener implements  MouseListener, MouseMotionListener {
+public abstract class MouseSelectionListener /*extends DropTargetAdapter*/ implements  MouseListener, MouseMotionListener {
 
-    /** Log. */
-    private static final Logger log = Logger.getLogger(MouseSelectionListener.class);
+	/** Log. */
+	private static final Logger log = Logger.getLogger(MouseSelectionListener.class);
 
-    private MauseMode mauseMode = MauseMode.ROTATE;
+	private MauseMode mauseMode = MauseMode.ROTATE;
 
-    /**
-     *
-     */
-    public MouseSelectionListener() {
-        super();
-    }
+	/**
+	 *
+	 */
+	public MouseSelectionListener() {
+		super();
+	}
 
-    @Override
-    public void mouseEntered(MouseEvent e) {
-       //
-    }
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		//
+	}
 
-    @Override
-    public void mouseExited(MouseEvent e) {
-        //
-    }
+	@Override
+	public void mouseExited(MouseEvent e) {
+		//
+	}
 
-    @Override
-    public void mouseDragged(MouseEvent e) {
-        //
-    }
+	@Override
+	public void mouseDragged(MouseEvent e) {
 
-    @Override
-    public void mouseMoved(MouseEvent e) {
-        //
-    }
+	}
 
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        if (this.mauseMode == MauseMode.ROTATE) {
-            select(e.getX(), e.getY());
-        }
-    }
+	@Override
+	public void mouseMoved(MouseEvent e) {
+	}
 
-    @Override
-    public void mouseReleased(MouseEvent e) {
-        if (moveActiveEditor(e.getX(), e.getY(), true)) {
-            e.consume();
-        }
-    }
+	@Override
+	public void mouseClicked(MouseEvent e) {
 
-    protected abstract void selectActiveEditor(int x, int y);
+		if (this.mauseMode == MauseMode.ROTATE) {
+			select(e.getX(), e.getY());
+		}
+	}
 
-    protected abstract boolean moveActiveEditor(int x, int y, boolean b);
+	@Override
+	public void mouseReleased(MouseEvent e) {
 
-    protected abstract Selection select(int x, int y);
+		if (moveActiveEditor(e.getX(), e.getY(), true)) {
+			e.consume();
+		}
+	}
 
-    protected abstract Selection select(Ray3d selectRay);
 
-    @Override
-    public void mousePressed(MouseEvent e) {
-        selectActiveEditor(e.getX(), e.getY());
-    }
+	protected abstract void selectActiveEditor(int x, int y);
+
+	protected abstract boolean moveActiveEditor(int x, int y, boolean b);
+
+	protected abstract Selection select(int x, int y);
+
+	protected abstract Selection select(Ray3d selectRay);
+
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		selectActiveEditor(e.getX(), e.getY());
+
+	}
 }

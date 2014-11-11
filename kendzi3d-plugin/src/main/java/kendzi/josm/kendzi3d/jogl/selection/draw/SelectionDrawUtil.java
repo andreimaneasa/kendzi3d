@@ -27,162 +27,161 @@ import kendzi.math.geometry.ray.Ray3d;
 
 public class SelectionDrawUtil {
 
-    private static float[] colorArrays = new float[4];
+	private static float[] colorArrays = new float[4];
 
-    private GLUquadric quadratic;   // Storage For Our Quadratic Objects
-    private GLU glu = new GLU();
+	private GLUquadric quadratic;   // Storage For Our Quadratic Objects
+	private GLU glu = new GLU();
 
-    public void init(GL2 gl) {
-        this.quadratic = this.glu.gluNewQuadric();
-        this.glu.gluQuadricNormals(this.quadratic, GLU.GLU_SMOOTH); // Create Smooth Normals
-    }
+	public void init(GL2 gl) {
+		this.quadratic = this.glu.gluNewQuadric();
+		this.glu.gluQuadricNormals(this.quadratic, GLU.GLU_SMOOTH); // Create Smooth Normals
+	}
 
-    public void draw(GL2 gl, ObjectSelectionManager manager, Camera camera) {
+	public void draw(GL2 gl, ObjectSelectionManager manager, Camera camera) {
 
-        if (manager.getLastClosestPointOnBaseRay() != null) {
-            drawPoint(gl, manager.getLastClosestPointOnBaseRay());
-        }
+		if (manager.getLastClosestPointOnBaseRay() != null) {
+			drawPoint(gl, manager.getLastClosestPointOnBaseRay());
+		}
 
-        Ray3d select = manager.getLastSelectRay();
-        if (select != null) {
-            drawSelectRay(gl, select);
-        }
+		Ray3d select = manager.getLastSelectRay();
+		if (select != null) {
+			drawSelectRay(gl, select);
+		}
 
-        drawEditors(gl, manager.getLastSelection(), manager.getLastActiveEditor(), camera);
+		drawEditors(gl, manager.getLastSelection(), manager.getLastActiveEditor(), camera);
 
+	}
 
-    }
+	private void drawEditors(GL2 gl, Selection selection, Editor activeEditor, Camera camera) {
+		if (selection == null) {
+			return;
+		}
 
-    private void drawEditors(GL2 gl, Selection selection, Editor activeEditor, Camera camera) {
-        if (selection == null) {
-            return;
-        }
+		Point3d cameraPoint = camera.getPoint();
 
-        Point3d cameraPoint = camera.getPoint();
+		List<Editor> editors = selection.getEditors();
 
-        List<Editor> editors = selection.getEditors();
+		gl.glDisable(GL2.GL_TEXTURE_2D);
+		// gl.glEnable(GL2.GL_LIGHTING);
 
-        gl.glDisable(GL2.GL_TEXTURE_2D);
-       // gl.glEnable(GL2.GL_LIGHTING);
+		for (Editor editor : editors) {
+			boolean isActiveEditor = editor.equals(activeEditor);
 
-        for (Editor editor : editors) {
-            boolean isActiveEditor = editor.equals(activeEditor);
+			if (editor instanceof ArrowEditor) {
+				ArrowEditor ae = (ArrowEditor) editor;
+				Point3d p = ae.getEditorOrigin();
+				Vector3d v = ae.getVector();
+				double l = ae.getLength();
 
-            if (editor instanceof ArrowEditor) {
-                ArrowEditor ae = (ArrowEditor) editor;
-                Point3d p = ae.getEditorOrigin();
-                Vector3d v = ae.getVector();
-                double l = ae.getLength();
+				double camDistanceRatio = cameraPoint.distance(p) * Editor.SELECTION_ETITOR_CAMERA_RATIO;
 
-                double camDistanceRatio = cameraPoint.distance(p) * Editor.SELECTION_ETITOR_CAMERA_RATIO;
+				if (isActiveEditor) {
+					gl.glColor3fv(Color.RED.darker().darker().darker().getRGBComponents(new float[4]), 0);
+				} else {
+					gl.glColor3fv(Color.green.darker().darker().darker().getRGBComponents(new float[4]), 0);
+				}
 
-                if (isActiveEditor) {
-                    gl.glColor3fv(Color.RED.darker().darker().darker().getRGBComponents(new float[4]), 0);
-                } else {
-                    gl.glColor3fv(Color.green.darker().darker().darker().getRGBComponents(new float[4]), 0);
-                }
+				gl.glPushMatrix();
+				gl.glTranslated(p.x, p.y, p.z);
 
-                gl.glPushMatrix();
-                gl.glTranslated(p.x, p.y, p.z);
+				//                DrawUtil.drawDotY(gl, 0.3, 6);
+				// this.glu.gluSphere(this.quadratic, ObjectSelectionManager.SELECTION_ETITOR_RADIUS, 32, 32);
 
-//                DrawUtil.drawDotY(gl, 0.3, 6);
-               // this.glu.gluSphere(this.quadratic, ObjectSelectionManager.SELECTION_ETITOR_RADIUS, 32, 32);
-
-                gl.glPopMatrix();
-
-
-                gl.glPushMatrix();
-                gl.glTranslated(p.x + v.x * l, p.y + v.y * l, p.z + v.z * l);
-
-                double lenght = 2d * camDistanceRatio;
-                int section = 16;
-                double arrowLenght = 1d * camDistanceRatio;
-                double baseRadius = 0.1d * camDistanceRatio;
-                double arrowRadius = 0.6d * camDistanceRatio;
-                drawArrowInMiddle(gl, this.glu, this.quadratic, lenght, arrowLenght, baseRadius, arrowRadius, section);
-
-                // DrawUtil.drawDotY(gl, 0.3, 6);
-                // Draw A Sphere With A Radius Of 1 And 16 Longitude And 16 Latitude Segments
-                // this.glu.gluSphere(this.quadratic, 0.3f, 32, 32);
-                // http://www.felixgers.de/teaching/jogl/gluQuadricPrimitives.html
-                // A Cylinder With A Radius Of 0.5 And A Height Of 2
-                // glu.gluCylinder(quadratic, 1.0f, 1.0f, 3.0f, 32, 32);
-
-                gl.glPopMatrix();
-            }
-        }
-    }
-
-    public static void drawArrowInMiddle(GL2 gl, GLU glu, GLUquadric quadratic, double lenght, double arrowLenght, double baseRadius, double arrowRadius, int section) {
-        gl.glPushMatrix();
-        gl.glTranslated(0, -lenght/2d, 0);
-        drawArrow(gl, glu, quadratic, lenght, arrowLenght, baseRadius, arrowRadius, section);
-        gl.glPopMatrix();
-    }
+				gl.glPopMatrix();
 
 
-    public static void drawArrow(GL2 gl, GLU glu, GLUquadric quadratic, double lenght, double arrowLenght, double baseRadius, double arrowRadius, int section) {
-        gl.glPushMatrix();
-        //gl.glTranslated(0, -lenght/2d, 0);
-        gl.glRotated(-90d, 1d, 0d, 0d);
+				gl.glPushMatrix();
+				gl.glTranslated(p.x + v.x * l, p.y + v.y * l, p.z + v.z * l);
 
-        double baseLenght = lenght - arrowLenght;
+				double lenght = 2d * camDistanceRatio;
+				int section = 16;
+				double arrowLenght = 1d * camDistanceRatio;
+				double baseRadius = 0.1d * camDistanceRatio;
+				double arrowRadius = 0.6d * camDistanceRatio;
+				drawArrowInMiddle(gl, this.glu, this.quadratic, lenght, arrowLenght, baseRadius, arrowRadius, section);
 
-        glu.gluDisk(quadratic, 0, baseRadius, section, 2);
-        glu.gluCylinder(quadratic, baseRadius, baseRadius, baseLenght, section, 2);
+				// DrawUtil.drawDotY(gl, 0.3, 6);
+				// Draw A Sphere With A Radius Of 1 And 16 Longitude And 16 Latitude Segments
+				// this.glu.gluSphere(this.quadratic, 0.3f, 32, 32);
+				// http://www.felixgers.de/teaching/jogl/gluQuadricPrimitives.html
+				// A Cylinder With A Radius Of 0.5 And A Height Of 2
+				// glu.gluCylinder(quadratic, 1.0f, 1.0f, 3.0f, 32, 32);
 
-        gl.glTranslated(0, 0, baseLenght);
+				gl.glPopMatrix();
+			}
+		}
+	}
 
-        glu.gluDisk(quadratic, 0, arrowRadius, section, 2);
-        glu.gluCylinder(quadratic, arrowRadius, 0, arrowLenght, section, 2);
-
-        gl.glPopMatrix();
-
-    }
-
-    /**
-     * @param gl
-     * @param select
-     */
-    public static void drawSelectRay(GL2 gl, Ray3d select) {
-        gl.glPushMatrix();
-
-        Vector3d v = select.getVector();
-        Point3d p = select.getPoint();
-
-        double dx = p.x + 10*v.x;
-        double dy = p.y + 10*v.y;
-        double dz = p.z + 10*v.z;
+	public static void drawArrowInMiddle(GL2 gl, GLU glu, GLUquadric quadratic, double lenght, double arrowLenght, double baseRadius, double arrowRadius, int section) {
+		gl.glPushMatrix();
+		gl.glTranslated(0, -lenght/2d, 0);
+		drawArrow(gl, glu, quadratic, lenght, arrowLenght, baseRadius, arrowRadius, section);
+		gl.glPopMatrix();
+	}
 
 
-        gl.glTranslated(dx, dy, dz);
+	public static void drawArrow(GL2 gl, GLU glu, GLUquadric quadratic, double lenght, double arrowLenght, double baseRadius, double arrowRadius, int section) {
+		gl.glPushMatrix();
+		//gl.glTranslated(0, -lenght/2d, 0);
+		gl.glRotated(-90d, 1d, 0d, 0d);
 
-        gl.glColor3fv(Color.ORANGE.darker().getRGBComponents(colorArrays), 0);
+		double baseLenght = lenght - arrowLenght;
 
-        DrawUtil.drawDotY(gl, 0.3, 6);
+		glu.gluDisk(quadratic, 0, baseRadius, section, 2);
+		glu.gluCylinder(quadratic, baseRadius, baseRadius, baseLenght, section, 2);
 
-        gl.glPopMatrix();
-    }
+		gl.glTranslated(0, 0, baseLenght);
+
+		glu.gluDisk(quadratic, 0, arrowRadius, section, 2);
+		glu.gluCylinder(quadratic, arrowRadius, 0, arrowLenght, section, 2);
+
+		gl.glPopMatrix();
+
+	}
+
+	/**
+	 * @param gl
+	 * @param select
+	 */
+	public static void drawSelectRay(GL2 gl, Ray3d select) {
+		gl.glPushMatrix();
+
+		Vector3d v = select.getVector();
+		Point3d p = select.getPoint();
+
+		double dx = p.x + 10*v.x;
+		double dy = p.y + 10*v.y;
+		double dz = p.z + 10*v.z;
 
 
-    /**
-     * @param gl
-     * @param select
-     */
-    public static void drawPoint(GL2 gl, Point3d p) {
-        gl.glPushMatrix();
+		gl.glTranslated(dx, dy, dz);
 
-        double dx = p.x;
-        double dy = p.y;
-        double dz = p.z;
+		gl.glColor3fv(Color.ORANGE.darker().getRGBComponents(colorArrays), 0);
 
-        gl.glTranslated(dx, dy, dz);
+		DrawUtil.drawDotY(gl, 0.3, 6);
 
-        gl.glColor3fv(Color.ORANGE.darker().getRGBComponents(new float[4]), 0);
+		gl.glPopMatrix();
+	}
 
-        DrawUtil.drawDotY(gl, 0.6, 6);
 
-        gl.glPopMatrix();
-    }
+	/**
+	 * @param gl
+	 * @param select
+	 */
+	public static void drawPoint(GL2 gl, Point3d p) {
+		gl.glPushMatrix();
+
+		double dx = p.x;
+		double dy = p.y;
+		double dz = p.z;
+
+		gl.glTranslated(dx, dy, dz);
+
+		gl.glColor3fv(Color.ORANGE.darker().getRGBComponents(new float[4]), 0);
+
+		DrawUtil.drawDotY(gl, 0.6, 6);
+
+		gl.glPopMatrix();
+	}
 
 }

@@ -10,60 +10,68 @@ package kendzi.josm.kendzi3d.jogl.selection;
 
 import javax.vecmath.Point3d;
 
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
+
 public abstract class BuildingSelection implements Selection {
 
-    Point3d center;
-    double radius;
+	Point3d center;
+	double radius;
 
-    long wayId;
+	long wayId;
 
 
-    public BuildingSelection(long wayId,   Point3d center, double radius) {
-        super();
-        this.center = center;
-        this.radius = radius;
-        this.wayId = wayId;
-    }
+	public BuildingSelection(long wayId,   Point3d center, double radius) {
+		super();
+		this.center = center;
+		this.radius = radius;
+		this.wayId = wayId;
+	}
 
-    @Override
-    public Point3d getCenter() {
-        return this.center;
-    }
 
-    @Override
-    public double getRadius() {
-        return this.radius;
-    }
+	@Override
+	public Point3d getCenter() {
+		return this.center;
+	}
 
-    @Override
-    public abstract void select(boolean selected);
+	@Override
+	public double getRadius() {
+		return this.radius;
+	}
 
-    /**
-     * @return the wayId
-     */
-    public long getWayId() {
-        return wayId;
-    }
+	@Override
+	public long getWayId() {
+		return this.wayId;
+	}
 
-    /**
-     * @param wayId the wayId to set
-     */
-    public void setWayId(long wayId) {
-        this.wayId = wayId;
-    }
+	@Override
+	public abstract void select(boolean selected);
 
-    /**
-     * @param center the center to set
-     */
-    public void setCenter(Point3d center) {
-        this.center = center;
-    }
+	//    /**
+	//     * @return the wayId
+			//     */
+			//    public long getWayId() {
+		//        return wayId;
+	//    }
 
-    /**
-     * @param radius the radius to set
-     */
-    public void setRadius(double radius) {
-        this.radius = radius;
-    }
+	/**
+	 * @param wayId the wayId to set
+	 */
+	public void setWayId(long wayId) {
+		this.wayId = wayId;
+	}
+
+	/**
+	 * @param center the center to set
+	 */
+	public void setCenter(Point3d center) {
+		this.center = center;
+	}
+
+	/**
+	 * @param radius the radius to set
+	 */
+	public void setRadius(double radius) {
+		this.radius = radius;
+	}
 
 }

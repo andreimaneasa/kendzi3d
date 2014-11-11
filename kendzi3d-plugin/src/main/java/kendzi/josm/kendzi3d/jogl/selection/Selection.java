@@ -12,13 +12,17 @@ import java.util.List;
 
 import javax.vecmath.Point3d;
 
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
+
 import kendzi.josm.kendzi3d.jogl.selection.editor.Editor;
 
 public interface Selection {
-    Point3d getCenter();
-    double getRadius();
+	Point3d getCenter();
+	double getRadius();
+	long getWayId();
+    
+	void select(boolean selected);
 
-    void select(boolean selected);
-
-    List<Editor> getEditors();
+	List<Editor> getEditors();
+	
 }
