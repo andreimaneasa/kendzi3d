@@ -42,7 +42,7 @@ public class RoofType2v7 extends RectangleRoofTypeBuilder {
 
         boolean left = isLeft();
 
-        Double h1 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_1, 2.5d);
+        Double h1 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_5, 2.5d);
 
         Double l1 = getLenghtMetersPersent(conf.getMeasurements(), MeasurementKey.LENGTH_1, conf.getRecWidth(),
                 conf.getRecWidth() / 2d);
