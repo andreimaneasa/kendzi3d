@@ -22,14 +22,13 @@ public  class RoofType0v1 extends RoofType0 {
 		return 1;
 	}
 
-	Double h2;
 
 	@Override
 	public RoofTypeOutput buildRectangleRoof(RectangleRoofTypeConf conf) {
 
 		Double h1 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_1, 0.5d);
 		
-			h2 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_5, 2.5d);
+		Double h2 = getHeightMeters(conf.getMeasurements(), MeasurementKey.HEIGHT_5, 2.5d);
 
 		Double l1 = getLenghtMetersPersent(conf.getMeasurements(), MeasurementKey.LENGTH_1, conf.getRecHeight(),
 				conf.getRecHeight() / 3d);
@@ -39,6 +38,5 @@ public  class RoofType0v1 extends RoofType0 {
 		return build(conf.getBuildingPolygon(), conf.getRecHeight(), conf.getRecWidth(), conf.getRectangleContur(), h1, h2, l1,
 				0, 0, 0, type, conf.getRoofTextureData());
 	}
-
 
 }

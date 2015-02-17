@@ -81,6 +81,7 @@ public class ModelRender {
 
         draw(gl, model);
     }
+ 
 
     private void draw(GL2 gl, Model model) {
 

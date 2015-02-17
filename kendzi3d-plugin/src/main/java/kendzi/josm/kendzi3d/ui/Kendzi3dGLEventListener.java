@@ -7,6 +7,7 @@
 package kendzi.josm.kendzi3d.ui;
 
 import java.awt.Canvas;
+import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -229,6 +230,7 @@ public class Kendzi3dGLEventListener implements GLEventListener, CameraChangeLis
 				return Kendzi3dGLEventListener.this.renderJosm.select(selectRay);
 
 			}
+
 		};
 
 		JosmEditorListener jel = new JosmEditorListener();
@@ -240,9 +242,15 @@ public class Kendzi3dGLEventListener implements GLEventListener, CameraChangeLis
 		return objectSelectionListener;
 	}
 
-	public void setObjectSelectionListener(
-			ObjectSelectionManager objectSelectionListener) {
+	public void setObjectSelectionListener(ObjectSelectionManager objectSelectionListener) {
 		this.objectSelectionListener = objectSelectionListener;
+	}
+
+	public SimpleMoveAnimator getSimpleMoveAnimator(){
+		return simpleMoveAnimator;
+	}
+	public void setSimpleMoveAnimator(SimpleMoveAnimator simpleMoveAnimator ){
+		this.simpleMoveAnimator= simpleMoveAnimator;
 	}
 
 	@Override
@@ -900,6 +908,7 @@ public class Kendzi3dGLEventListener implements GLEventListener, CameraChangeLis
 		for (FpsListener fl : this.fpsChangeListenerList) {
 			fl.dispatchFpsChange(fpsChangeEvent);
 		}
+	
 	}
 
 	public void addFpsChangeListener(FpsListener pFpsListener) {

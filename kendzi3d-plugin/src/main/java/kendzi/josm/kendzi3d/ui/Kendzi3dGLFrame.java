@@ -17,6 +17,8 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.Collection;
@@ -31,7 +33,9 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
@@ -42,6 +46,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.text.MaskFormatter;
 
+import kendzi.jogl.camera.CameraMoveListener;
+import kendzi.jogl.camera.SimpleMoveAnimator;
 import kendzi.jogl.model.render.ModelRender;
 import kendzi.jogl.texture.library.TextureLibraryStorageService;
 import kendzi.josm.kendzi3d.jogl.model.NewBuilding;
@@ -60,6 +66,7 @@ import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.tools.I18n;
 
 import com.google.inject.Inject;
 import com.jogamp.common.GlueGenVersion;
@@ -72,30 +79,34 @@ import com.jogamp.opengl.util.FPSAnimator;
  * 
  * @author Tomasz Kędziora (Kendzi)
  */
-public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListener, ActionListener, DragGestureListener{
+public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListener, ActionListener, DragGestureListener , MouseWheelListener
+{
+
+	private long relativeTimeSpent; // time spent plus a time fixed by developer 
+	private long timeSpent; // time spent from TimeAndFps
+	private int notches = 0; // -1 for zoom in and 1 for zoom out
 
 	boolean activ = false; // select contains something or not
 	JButton buttonColorWall;
 	JButton buttonColorRoof;
-	JButton buttonActivateColor;
 	JButton buttonChangeHeight;
 	JButton buttonChangeOrientation;
-	//	JFormattedTextField textField =new JFormattedTextField(createFormatter("##"));
 
 	SpinnerModel model = new SpinnerNumberModel(2.5, 0.1, 20, 0.1);     
 	JSpinner spinner = new JSpinner(model);
 
 	JList list ;
 	public JPanel renderPanel;
-	Collection<OsmPrimitive> selVal;
 
-	RoofDialogOrientation ra;
+	RoofDialogOrientation roofDialogOrientation;
 
 	private Map<String, ImageIcon> imageMap;
 
 	MethodsForKendzi3dGLFrame method = new MethodsForKendzi3dGLFrame();
 
 	Selection selection = getLastSelection();
+
+	Collection<OsmPrimitive> selVal = getOsmPrimitveFromSelectedBuilding(selection);
 
 	JPanel jpanel = new JPanel();
 
@@ -194,6 +205,7 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 
 				String obj = (String) tr.getTransferData(TransferableRoof.roofFlavor);
 
+				selection = getLastSelection();
 				if (selection != null) {
 
 					event.isDataFlavorSupported(TransferableRoof.roofFlavor);
@@ -202,7 +214,6 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 
 					event.dropComplete(true);
 
-					selection = getLastSelection();
 					selVal = getOsmPrimitveFromSelectedBuilding(selection);
 
 					String value = null;
@@ -210,8 +221,10 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 
 					method.switchRoofType(obj, selVal);// set for selected
 
-					list.setEnabled(false);
+				}
+				else{
 
+					JOptionPane.showMessageDialog(null, I18n.tr("Please select one building", new Object[0]), "Error", 0);
 				}
 
 			} catch (Exception e) {
@@ -239,7 +252,6 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 
 	public void initUI() {
 
-
 		Container c = this;
 		c.setLayout(new BorderLayout());
 		renderPanel = makeRenderPanel();
@@ -260,9 +272,11 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		DragSource ds = new DragSource();
 		ds.createDefaultDragGestureRecognizer(list, DnDConstants.ACTION_COPY,this);
 
+		renderPanel.addMouseWheelListener(this); // renderPanel listen MouseWheel for zoom in/out
+
+
 		buttonColorWall = new JButton("Color Wall");
 		buttonColorRoof = new JButton("Color Roof");
-		buttonActivateColor = new JButton("Activate");
 		buttonChangeHeight = new JButton("Height");
 		buttonChangeOrientation = new JButton("Orientation");
 
@@ -270,76 +284,41 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		// keyboard shortcut ALT + V
 		buttonColorRoof.setMnemonic(KeyEvent.VK_R); //push button Color
 		// keyboard shortcut ALT + R
-		buttonActivateColor.setMnemonic(KeyEvent.VK_X);// push button Color
-		//keyboard shortcut ALT + X
-
-		buttonColorWall.setEnabled(false);
-		buttonColorRoof.setEnabled(false);
-		buttonChangeHeight.setEnabled(false);
-		list.setEnabled(false);
-		spinner.setEnabled(false);
-
-		buttonActivateColor.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-
-				selection = getLastSelection();
-				// verify if select contains something
-
-				if (selection != null) {
-					activ = true;
-				}
-
-				if (activ) {
-					buttonColorWall.setEnabled(true);
-					buttonColorRoof.setEnabled(true);
-					list.setEnabled(true);
-					spinner.setEnabled(true);
-					buttonChangeHeight.setEnabled(true);
-				}
-
-				if (!activ) {
-					buttonColorWall.setEnabled(false);
-					buttonColorRoof.setEnabled(false);
-					list.setEnabled(false);
-					spinner.setEnabled(false);
-					buttonChangeHeight.setEnabled(false);
-				}
-			}
-		});
 
 		buttonColorWall.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 
 				selection = getLastSelection();
+				if (selection != null){
 
-				selVal = getOsmPrimitveFromSelectedBuilding(selection);
+					selVal = getOsmPrimitveFromSelectedBuilding(selection);
 
-				log.info("am gasit ceva " + selVal);
+					// start Plugin
+					AddAction add = new AddAction(selVal);
+					add.startPluginForColorWall();
 
-				// start Plugin
-				AddAction add = new AddAction(selVal);
-				add.startPluginForColorWall();
-				buttonColorWall.setEnabled(false);
+				}else{
+					JOptionPane.showMessageDialog(null, I18n.tr("Please select one building", new Object[0]), "Error", 0);
+				}
 			}
 		});
 
 		buttonColorRoof.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-
 				selection = getLastSelection();
+				if (selection != null){
 
-				selVal = getOsmPrimitveFromSelectedBuilding(selection);
+					selVal = getOsmPrimitveFromSelectedBuilding(selection);
 
-				log.info("am gasit ceva " + selVal);
+					// start Plugin
+					AddAction add = new AddAction(selVal);
+					add.startPluginForColorRoof();
 
-				// start Plugin
-				AddAction add = new AddAction(selVal);
-				add.startPluginForColorRoof();
-				buttonColorRoof.setEnabled(false);
+				}else{
+					JOptionPane.showMessageDialog(null, I18n.tr("Please select one building", new Object[0]), "Error", 0);
+				}
 			}
 		});
 
@@ -348,23 +327,25 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 			public void actionPerformed(ActionEvent e) {
 				selection = getLastSelection();
 
-				selVal = getOsmPrimitveFromSelectedBuilding(selection);
+				if (selection != null){
 
-				String height;
+					selVal = getOsmPrimitveFromSelectedBuilding(selection);
 
-				Double d= (Double) spinner.getValue();
+					String height;
 
-				String input  = String.valueOf(d);
-				int value = input.indexOf(".");
+					Double d = (Double) spinner.getValue();
 
-				height=input.substring(0, value+2);
+					String input  = String.valueOf(d);
+					int value = input.indexOf(".");
 
-				if (selVal != null){
+					height = input.substring(0, value+2);
+
 					Main.main.undoRedo.add(new ChangePropertyCommand(selVal, "roof:type:height",height));
+
+				}else{
+					JOptionPane.showMessageDialog(null, I18n.tr("Please select one building", new Object[0]), "Error", 0);
 				}
 
-				spinner.setEnabled(false);
-				buttonChangeHeight.setEnabled(false);
 			}
 		});
 
@@ -373,13 +354,16 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 			public void actionPerformed(ActionEvent e) {
 				selection = getLastSelection();
 
-				selVal = getOsmPrimitveFromSelectedBuilding(selection);
+				if (selection != null){
 
-				String input =ra.getNameFromComboBox(); 
+					selVal = getOsmPrimitveFromSelectedBuilding(selection);
 
-				if (selVal != null){
+					String input = roofDialogOrientation.getNameFromComboBox(); 
+
 					Main.main.undoRedo.add(new ChangePropertyCommand(selVal, "roof:orientation",getNameOrientation(input)));
 
+				}else{
+					JOptionPane.showMessageDialog(null, I18n.tr("Please select one building", new Object[0]), "Error", 0);
 				}
 			}
 		});
@@ -392,18 +376,20 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 
 		jpanel.setPreferredSize(new Dimension(250, 512)); 
 		jpanel.add(scroll);
-		jpanel.add(buttonColorWall); 
-		jpanel.add(buttonColorRoof); 
-		jpanel.add(buttonActivateColor); 
-		jpanel.add(spinner);
-		//		jpanel.add(textField);
-		jpanel.add(buttonChangeHeight);
-		ra = new RoofDialogOrientation(jpanel);
-		ra.setupTypeCombo();
-		jpanel.add(buttonChangeOrientation);
-
-
-
+		
+		JPanel panelInterface = new JPanel();
+		panelInterface.setPreferredSize(new Dimension(180,512));
+		
+		panelInterface.add(buttonColorWall); 
+		panelInterface.add(buttonColorRoof);
+		
+		panelInterface.add(spinner);
+		panelInterface.add(buttonChangeHeight);
+		roofDialogOrientation = new RoofDialogOrientation(panelInterface);
+		roofDialogOrientation.setupTypeCombo();
+		panelInterface.add(buttonChangeOrientation);
+		
+		jpanel.add(panelInterface);
 
 		this.jTFFps = new JTextField("Fps: unknown");
 		this.jTFFps.setEditable(false);
@@ -436,10 +422,8 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		}else if(input.equals("270"+degrees)){
 			return RoofOrientation.reflex.toString();
 		}
-
 		return input;
 	}
-
 
 	//A convenience method for creating a MaskFormatter.
 	protected MaskFormatter createFormatter(String s) {
@@ -456,12 +440,15 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 	private Map<String, ImageIcon> createImageMap(String[] list) {
 		Map<String, ImageIcon> map = new HashMap<>();
 		for (String s : list) {
-			System.out.println("INTERESTING THING HERE: " + Kendzi3dGLFrame.class.getResource("/images/RoofTypes/"  + s + ".jpg"));
-			map.put(s, new ImageIcon( Kendzi3dGLFrame.class.getResource("/images/RoofTypes/"  + s + ".jpg")));
+			map.put(s, new ImageIcon(Kendzi3dGLFrame.class.getResource("/images/RoofTypes/"  + s + ".jpg")));
 		}
 		return map;
 	}
 
+	/**
+	 * 
+	 * @return last selection for buildings
+	 */
 	public Selection getLastSelection() {
 		Selection selection = null;
 		try {
@@ -474,12 +461,15 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		return selection;
 	}
 
+	/**
+	 * 
+	 * @return all dataSet from the map
+	 */
 	public DataSet getDataSet() {
 		return Main.main.getCurrentDataSet();
 	}
 
-	public Collection<OsmPrimitive> getOsmPrimitveFromSelectedBuilding(
-			Selection selection) {
+	public Collection<OsmPrimitive> getOsmPrimitveFromSelectedBuilding(Selection selection) {
 
 		boolean cond = false;
 
@@ -667,6 +657,37 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		log.info("GLCapabilities: " + capabilities);
 	}
 
+	/**
+	 * 
+	 * @return CameraMoveListener object
+	 */
+	public CameraMoveListener returnCameraMoveListener(){
+		SimpleMoveAnimator kinematicsSimpleAnimator = canvasListener.getSimpleMoveAnimator();
+		CameraMoveListener c = new CameraMoveListener(kinematicsSimpleAnimator);
+		return c;
+	}
+
+	/**
+	 * Get time spent plus a time fixed by developer.
+	 */
+	private long getRelativeTime(){
+		return relativeTimeSpent+2;
+	}
+
+	/**
+	 * Get time spent from TimeAndFps.
+	 */
+	private long getTimeSpent() {
+		return timeSpent;
+	}
+
+	/**
+	 * Set time spent from TimeAndFps.
+	 */
+	public void setTimeSpent(long timeSpent) {
+		this.timeSpent = timeSpent;
+	}
+
 	public void setTimeAndFps(final long time, final int fps) {
 		// in some configuration it is called from outside event queue
 		// and with out generated EDT violation
@@ -680,6 +701,36 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 			public void run() {
 				textField.setText("Fps: " + fps);
 				timeField.setText("Time Spent: " + time + " secs");
+
+				setTimeSpent(time);
+
+				if (notches < 0){
+					//					log.info( "face zoom in " ) ;
+					returnCameraMoveListener().moveActionForward(true);
+				}
+				else{
+					returnCameraMoveListener().moveActionForward(false);
+				}
+
+				if(getRelativeTime() == time) {
+					//					log.info("--am oprit zoom in");
+					returnCameraMoveListener().moveActionForward(false);
+					notches=0;
+				}
+
+				if(notches > 0){
+					//					log.info( "face zoom out " ) ;
+					returnCameraMoveListener().moveActionBackwards(true);
+				}
+				else{
+					returnCameraMoveListener().moveActionBackwards(false);
+				}
+
+				if(getRelativeTime() == time) {
+					//					log.info("--am oprit zoom out");
+					returnCameraMoveListener().moveActionBackwards(false);
+					notches=0;
+				}
 			}
 		});
 	}
@@ -752,18 +803,26 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		this.canvasListener = canvasListener;
 	}
 
-
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
 	}
-
 
 	@Override
 	public void dispatchFpsChange(FpsChangeEvent fpsChangeEvent) {
 		if (fpsChangeEvent != null) {
 			setTimeAndFps(fpsChangeEvent.getTime(), fpsChangeEvent.getFps());
 		}
+	}
+
+	/**
+	 * event from mouseWheel 
+	 */
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		notches = e.getWheelRotation(); // return -1 for zoom in and 1 for zoom out
+
+		long timeSpent = getTimeSpent();
+		relativeTimeSpent = timeSpent;
 	}
 
 }

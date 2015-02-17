@@ -23,11 +23,12 @@ public class ColorDialog
 extends ExtendedDialog
 implements ActionListener
 {
+	public String globalValue;
 	String value;
 	Collection<OsmPrimitive> globalSelectWall;
 	Collection<OsmPrimitive> globalSelectRoof;
-	private String global;
-	private String codHexa;
+	public String global;
+	public String codHexa;
 	String numar;
 
 	public String getCodHexa()
@@ -72,6 +73,12 @@ implements ActionListener
 		this.myOutput.setText(hexaCode);
 		jp.add(this.myOutput);
 		repaint();
+	}
+
+	public String getTextField(){
+		String str; 
+		str=myOutput.getText();
+		return str;
 	}
 
 	JButton button2 = new JButton("Add Attribute");
@@ -173,23 +180,26 @@ implements ActionListener
 
 	public static String toRGBCode(Color c)
 	{
-		String red = Integer.toHexString(c.getRed() & 0xFFFFFF);
-		String green = Integer.toHexString(c.getGreen() & 0xFFFFFF);
-		String blue = Integer.toHexString(c.getBlue() & 0xFFFFFF);
-		if (red.length() < 2) {
-			red = "0" + red;
-		}
-		if (green.length() < 2) {
-			green = "0" + green;
-		}
-		if (blue.length() < 2) {
-			blue = "0" + blue;
-		}
-		String hexa = red + green + blue;
+		String hex=null;
+		if(c!= null){
+			String red = Integer.toHexString(c.getRed() & 0xFFFFFF);
+			String green = Integer.toHexString(c.getGreen() & 0xFFFFFF);
+			String blue = Integer.toHexString(c.getBlue() & 0xFFFFFF);
+			if (red.length() < 2) {
+				red = "0" + red;
+			}
+			if (green.length() < 2) {
+				green = "0" + green;
+			}
+			if (blue.length() < 2) {
+				blue = "0" + blue;
+			}
+			String hexa = red + green + blue;
 
-		String hex = "#" + hexa;
-
+			hex = "#" + hexa;
+		}
 		return hex;
+
 	}
 
 	public boolean checkHex()
@@ -203,11 +213,23 @@ implements ActionListener
 		}
 		return t;
 	}
+	
+	public boolean checkGlobalHex()
+	{
+		boolean diez = this.global.startsWith("#");
+		boolean isHex = this.global.matches("^[#0-9A-Fa-f]+$");
+
+		boolean t = false;
+		if ((diez) && (isHex)) {
+			t = true;
+		}
+		return t;
+	}
 
 	/*
 	 * method cut the text if is longer than 7 characters, allows first 7 characters
 	 */
-	private String insertMaxSevenCharaters(ActionEvent evt)
+	public String insertMaxSevenCharaters(ActionEvent evt)
 	{
 		if (this.myOutput.getText().length() >= 7) {
 			this.myOutput.setText(this.myOutput.getText().substring(0, 7));
@@ -217,5 +239,9 @@ implements ActionListener
 
 	@Override
 	public void actionPerformed(ActionEvent evt) {}
+
+
+
+
 
 }

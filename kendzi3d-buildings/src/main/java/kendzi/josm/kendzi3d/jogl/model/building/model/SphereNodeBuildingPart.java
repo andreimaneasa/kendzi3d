@@ -90,4 +90,10 @@ public class SphereNodeBuildingPart implements NodeBuildingPart {
     public void setFacadeMaterialType(String facadeMaterialType) {
         this.facadeMaterialType = facadeMaterialType;
     }
+
+//	@Override
+//	public void setCylinderHeight(double height) {
+//		this.height=height;
+//		
+//	}
 }

@@ -17,6 +17,7 @@ import kendzi.josm.kendzi3d.jogl.selection.event.EditorChangeEvent;
 import org.apache.log4j.Logger;
 import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.command.ChangeCommand;
+import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 
@@ -44,7 +45,17 @@ public class JosmEditorListener implements kendzi.josm.kendzi3d.jogl.selection.O
                     }
                     OsmPrimitive primitive = Main.main.getCurrentDataSet().getPrimitiveById(ae.getPrimitiveId(), ae.getPrimitiveType());
 
-                    if (primitive instanceof Way) {
+                    if (primitive instanceof Node) {
+                    	Node newNode = new Node((Node) primitive);
+
+
+                    	newNode.put(ae.getFildName(), this.formater.format(newValue));
+
+                        ae.setValue(newValue);
+
+                        Main.main.undoRedo.add(new ChangeCommand(primitive, newNode));
+
+                    } else if (primitive instanceof Way) {
                         Way newWay = new Way((Way) primitive);
 
 
@@ -54,6 +65,7 @@ public class JosmEditorListener implements kendzi.josm.kendzi3d.jogl.selection.O
 
                         Main.main.undoRedo.add(new ChangeCommand(primitive, newWay));
 
+                        log.info("");
                     } else {
                         throw new RuntimeException("TODO");
                     }

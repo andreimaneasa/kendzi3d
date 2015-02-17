@@ -15,7 +15,9 @@ public interface NodeBuildingPart {
      * @return the height
      */
     public abstract double getHeight();
-
+    
+//    public abstract void setCylinderHeight(double height);
+    
     public abstract String getFacadeMaterialType();
 
     public abstract Color getFacadeColor();

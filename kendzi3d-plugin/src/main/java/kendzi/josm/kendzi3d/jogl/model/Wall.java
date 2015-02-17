@@ -155,18 +155,20 @@ public class Wall extends AbstractWayModel {
         // CSG cube = CSG.cube();
         // CSG sphere2 = CSG.sphere(null, 1.2d, null, null);
         // CSG sphere = CSG.cylinder(null, null, null, 4d);
-        MeshFactory cubeMesh2 = MeshFactoryUtil.cubeMesh(new Point3d(), new Vector3d(2d, 2d, 2d));
-        CSG sphere = meshToSolid(cubeMesh2);
-        MeshFactory cubeMesh3 = MeshFactoryUtil.cubeMesh(new Point3d(1, 1, 1), new Vector3d(2d, 2d, 2d));
-        CSG sphere2 = meshToSolid(cubeMesh3);
+   //--//     MeshFactory cubeMesh2 = MeshFactoryUtil.cubeMesh(new Point3d(), new Vector3d(2d, 2d, 2d));
+   //--//     CSG sphere = meshToSolid(cubeMesh2);
+  //--//     MeshFactory cubeMesh3 = MeshFactoryUtil.cubeMesh(new Point3d(1, 1, 1), new Vector3d(2d, 2d, 2d));
+  //--//      CSG sphere2 = meshToSolid(cubeMesh3);
 
         // toModel(testMesh, sphere.toPolygons());
         // toModel(testMesh, sphere2.toPolygons());
 
         // var polygons = cube.subtract(sphere).toPolygons();
-        ArrayList<Polygon> polygons = sphere.subtract(sphere2).toPolygons();
-        solidToModel(testMesh, polygons);
-
+  //--//      ArrayList<Polygon> polygons = sphere.subtract(sphere2).toPolygons();
+ //--//      solidToModel(testMesh, polygons);
+        
+// what is comment with  "//--//"  added a cube  
+        
         this.way.getNodes();
 
         double height = ModelUtil.getHeight(this.way, 2d);
@@ -178,13 +180,15 @@ public class Wall extends AbstractWayModel {
 
         for (int i = 0; i < this.way.getNodes().size(); i++) {
             Node node = this.way.getNode(i);
+            node.get("width");
 
             if ("box".equals(node.get("hole"))) {
                 WallHole wh = new WallHole();
                 wh.setWallHoleType(WallHoleType.box);
                 wh.setHeight(ModelUtil.getHeight(node, 2d));
                 wh.setWidth(ModelUtil.parseHeight(node.get("width"), 1d));
-                wh.setDepth(width * 2d);
+                double holeDeep = ModelUtil.parseHeight(node.get("width"), 1d);
+                wh.setDepth(width * holeDeep);
                 wh.setX(this.points.get(i).x);
                 wh.setY(this.points.get(i).y);
 
@@ -199,12 +203,16 @@ public class Wall extends AbstractWayModel {
 
         modelBuilder.addMesh(meshBorder);
 
-        if (this.points.size() > 0) {
-            Point2d start = this.points.get(0);
-            MeshFactory cubeMesh = MeshFactoryUtil.cubeMesh(new Point3d(start.x, 3, -start.y));
-
-            modelBuilder.addMesh(cubeMesh);
-        }
+     /*
+      * add over wall a cube 
+      */
+        
+//        if (this.points.size() > 0) {
+//            Point2d start = this.points.get(0);
+//            MeshFactory cubeMesh = MeshFactoryUtil.cubeMesh(new Point3d(start.x, 5, -start.y));
+//
+//            modelBuilder.addMesh(cubeMesh);
+//        }
 
         this.model = modelBuilder.toModel();
         this.model.setUseLight(true);
@@ -364,7 +372,7 @@ public class Wall extends AbstractWayModel {
             return;
         }
 
-        double min_height = 1;
+        double min_height = 0;
         double max_height = 3;
 
         Point2d[] simpleOutLine = simpleOutLine(points, width);
@@ -620,7 +628,7 @@ public class Wall extends AbstractWayModel {
             Vertex[] vertices = polygon.getVertices();
 
             FaceFactory faceRight = meshBorder.addFace(FaceType.TRIANGLE_FAN);
-            meshBorder.addTextCoord(new TextCoord(0.5, 0.5));
+            meshBorder.addTextCoord(new TextCoord(1,1));
 
             for (Vertex vertex : vertices) {
                 kendzi.math.geometry.Bool.CSG.Vector pos = vertex.getPos();
@@ -628,7 +636,7 @@ public class Wall extends AbstractWayModel {
                 int vi = meshBorder.addVertex(new Point3d(pos.x, pos.y, pos.z));
                 int ni = meshBorder.addNormal(new Vector3d(normal.x, normal.y, normal.z));
 
-                faceRight.addVert(vi, 0, ni);
+                faceRight.addVert(vi, 10, ni);
             }
         }
     }

@@ -157,6 +157,7 @@ public class RenderJOSM implements DataSetListenerAdapter.Listener{
 
 	}
 
+	@SuppressWarnings("deprecation")
 	public void draw(GL2 gl, Camera camera) {
 
 		if (this.datasetChanged) {
@@ -554,7 +555,7 @@ public class RenderJOSM implements DataSetListenerAdapter.Listener{
 
 	public void drawSelectable(GL2 gl) {
 
-		gl.glColor3fv(Color.ORANGE.darker().getRGBComponents(new float[4]), 0);
+		gl.glColor3fv(Color.MAGENTA.darker().getRGBComponents(new float[4]), 0);
 
 		for (WorldObject r : models) {
 			if (r instanceof Selectable) {

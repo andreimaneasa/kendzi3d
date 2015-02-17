@@ -34,7 +34,6 @@ public class Poly2TriSimpleUtil {
 
         return convert(outer);
     }
-
     private static List<Triangle2d> convert(Polygon p) {
 
         List<DelaunayTriangle> triangles = p.getTriangles();

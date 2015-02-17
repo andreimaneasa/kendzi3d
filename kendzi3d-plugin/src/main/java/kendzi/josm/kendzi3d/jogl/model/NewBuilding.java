@@ -9,10 +9,8 @@ package kendzi.josm.kendzi3d.jogl.model;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,22 +31,16 @@ import kendzi.jogl.texture.library.BuildingElementsTextureManager;
 import kendzi.jogl.texture.library.OsmBuildingElementsTextureMenager;
 import kendzi.jogl.texture.library.TextureFindCriteria;
 import kendzi.jogl.texture.library.TextureLibraryStorageService;
-import kendzi.josm.kendzi3d.jogl.RenderJOSM;
 import kendzi.josm.kendzi3d.jogl.model.building.builder.BuildingBuilder;
 import kendzi.josm.kendzi3d.jogl.model.building.builder.BuildingOutput;
 import kendzi.josm.kendzi3d.jogl.model.building.builder.BuildingPartOutput;
-import kendzi.josm.kendzi3d.jogl.model.building.builder.roof.DormerRoofBuilder;
 import kendzi.josm.kendzi3d.jogl.model.building.model.BuildingModel;
 import kendzi.josm.kendzi3d.jogl.model.building.model.BuildingPart;
-import kendzi.josm.kendzi3d.jogl.model.building.model.Wall;
 import kendzi.josm.kendzi3d.jogl.model.building.model.WallNode;
 import kendzi.josm.kendzi3d.jogl.model.building.model.WallPart;
-import kendzi.josm.kendzi3d.jogl.model.building.model.roof.RoofModel;
 import kendzi.josm.kendzi3d.jogl.model.building.parser.BuildingParser;
 import kendzi.josm.kendzi3d.jogl.model.export.ExportItem;
 import kendzi.josm.kendzi3d.jogl.model.export.ExportModelConf;
-import kendzi.josm.kendzi3d.jogl.model.roof.mk.model.DormerRoofModel;
-import kendzi.josm.kendzi3d.jogl.model.roof.mk.type.alias.RoofTypeAliasEnum;
 import kendzi.josm.kendzi3d.jogl.selection.BuildingSelection;
 import kendzi.josm.kendzi3d.jogl.selection.Selection;
 import kendzi.josm.kendzi3d.jogl.selection.editor.ArrowEditorJosmImp;
@@ -59,7 +51,6 @@ import kendzi.math.geometry.line.LineSegment3d;
 
 import org.apache.log4j.Logger;
 import org.openstreetmap.josm.data.osm.Node;
-import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
@@ -272,6 +263,7 @@ public class NewBuilding extends AbstractModel {
 
 			if (bm != null && bm.getParts() != null
 					&& bm.getParts().size() > 0) {
+				
 				bm.getParts().get(0).setMaxHeight(newValue);
 			}
 			NewBuilding.this.preview = true;
@@ -383,6 +375,7 @@ public class NewBuilding extends AbstractModel {
 		this.modelRender.render(pGl, this.model);
 
 		if (this.selected && this.bounds != null) {
+			
 			pGl.glColor3fv(Color.RED.darker().getRGBComponents(new float[4]), 0);
 
 			pGl.glLineWidth(6);

@@ -12,6 +12,8 @@ package kendzi.josm.kendzi3d.jogl.selection;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 
 import kendzi.josm.kendzi3d.ui.MauseMode;
 import kendzi.math.geometry.ray.Ray3d;
@@ -23,7 +25,7 @@ import org.apache.log4j.Logger;
  *
  * @author Tomasz Kędziora (Kendzi)
  */
-public abstract class MouseSelectionListener /*extends DropTargetAdapter*/ implements  MouseListener, MouseMotionListener {
+public abstract class MouseSelectionListener implements  MouseListener, MouseMotionListener, MouseWheelListener {
 
 	/** Log. */
 	private static final Logger log = Logger.getLogger(MouseSelectionListener.class);
@@ -72,6 +74,24 @@ public abstract class MouseSelectionListener /*extends DropTargetAdapter*/ imple
 		}
 	}
 
+	
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		
+	       int notches = e.getWheelRotation();
+	       if (notches < 0) {
+	    	   log.info(    + -notches + " notch(es)" ) ;
+	       } else {
+	    	   log.info("Mouse wheel moved DOWN "
+	                        + notches + " notch(es)" ) ;
+	       }
+	       
+	       if (e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {}
+	       
+		
+//		log.info("wheel");
+	}
+	
 
 	protected abstract void selectActiveEditor(int x, int y);
 

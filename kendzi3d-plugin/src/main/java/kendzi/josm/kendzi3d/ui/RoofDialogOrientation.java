@@ -25,13 +25,12 @@ public class RoofDialogOrientation extends JDialog
 	{
 		getContentPane().setLayout(new BorderLayout());
 
-		textField =new JLabel("Choose Orientation:");
+		textField = new JLabel("Orientation:");
 		this.cbType = new JComboBox();
 		this.cbType.setEditable(true);
 		char degrees= (char)186;
 		this.cbType.setPreferredSize(new Dimension(50,20));
 		this.cbType.setModel(new DefaultComboBoxModel(new String[] {"0"+degrees,"90"+degrees,"180"+degrees,"270"+degrees}));
-
 
 		panel.add(textField);
 		panel.add(this.cbType, "3, 3, fill, default");

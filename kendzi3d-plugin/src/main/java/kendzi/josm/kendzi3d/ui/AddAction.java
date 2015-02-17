@@ -15,6 +15,11 @@ public class AddAction extends JosmAction {
 		this.selVal=selVal;
 	}
 
+	public void setValueForColorBuilding(){
+		
+			
+	}
+	
 	public void startPluginForColorWall() {
 		ColorDialog colorDialog= new ColorDialog();
 		colorDialog.performTagAddingForWall(selVal);

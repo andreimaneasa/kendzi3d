@@ -34,7 +34,6 @@ import org.ejml.simple.SimpleMatrix;
 public abstract class RectangleRoofTypeBuilder extends AbstractRoofTypeBuilder 
 {
 
-
 	/**
 	 * @param conf
 	 *            builder configuration
