@@ -65,7 +65,6 @@ public class JosmEditorListener implements kendzi.josm.kendzi3d.jogl.selection.O
 
                         Main.main.undoRedo.add(new ChangeCommand(primitive, newWay));
 
-                        log.info("");
                     } else {
                         throw new RuntimeException("TODO");
                     }

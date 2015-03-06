@@ -79,8 +79,8 @@ public class BuildingBuilder {
 	 * @param tm texture manager
 	 * @return building model and debug informations
 	 */
-	public static BuildingOutput buildModel(BuildingModel buildingModel, BuildingElementsTextureManager tm) {
 
+	public static BuildingOutput buildModel(BuildingModel buildingModel, BuildingElementsTextureManager tm) {
 		List<BuildingPartOutput> partsOut = new ArrayList<BuildingPartOutput>();
 
 		ModelFactory mf = ModelFactory.modelBuilder();

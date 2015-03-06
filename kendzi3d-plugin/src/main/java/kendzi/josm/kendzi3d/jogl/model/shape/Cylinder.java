@@ -3,13 +3,13 @@ package kendzi.josm.kendzi3d.jogl.model.shape;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.fixedfunc.GLLightingFunc;
 import javax.vecmath.Point2d;
@@ -19,9 +19,6 @@ import javax.vecmath.Vector3d;
 import kendzi.jogl.DrawUtil;
 import kendzi.jogl.camera.Camera;
 import kendzi.jogl.model.factory.BoundsFactory;
-import kendzi.jogl.model.factory.MaterialFactory;
-import kendzi.jogl.model.factory.MeshFactory;
-import kendzi.jogl.model.factory.ModelFactory;
 import kendzi.jogl.model.geometry.Bounds;
 import kendzi.jogl.model.geometry.Model;
 import kendzi.jogl.model.geometry.material.AmbientDiffuseComponent;
@@ -29,17 +26,13 @@ import kendzi.jogl.model.geometry.material.Material;
 import kendzi.jogl.model.loader.ModelLoadException;
 import kendzi.jogl.model.render.ModelRender;
 import kendzi.jogl.texture.dto.TextureData;
-import kendzi.jogl.texture.library.BuildingElementsTextureManager;
 import kendzi.jogl.texture.library.OsmBuildingElementsTextureMenager;
 import kendzi.jogl.texture.library.TextureFindCriteria;
 import kendzi.jogl.texture.library.TextureLibraryStorageService;
-import kendzi.josm.kendzi3d.jogl.model.NewBuildingDebug;
-import kendzi.josm.kendzi3d.jogl.model.building.builder.BuildingOutput;
+import kendzi.josm.kendzi3d.jogl.model.AbstractModel;
 import kendzi.josm.kendzi3d.jogl.model.building.builder.BuildingPartOutput;
-import kendzi.josm.kendzi3d.jogl.model.building.builder.roof.registry.RoofTypeBuilderRegistry;
 import kendzi.josm.kendzi3d.jogl.model.building.model.BuildingModel;
 import kendzi.josm.kendzi3d.jogl.model.building.model.BuildingPart;
-import kendzi.josm.kendzi3d.jogl.model.building.model.BuildingUtil;
 import kendzi.josm.kendzi3d.jogl.model.building.model.NodeBuildingPart;
 import kendzi.josm.kendzi3d.jogl.model.building.model.SphereNodeBuildingPart;
 import kendzi.josm.kendzi3d.jogl.model.building.model.WallNode;
@@ -49,14 +42,9 @@ import kendzi.josm.kendzi3d.jogl.model.export.ExportItem;
 import kendzi.josm.kendzi3d.jogl.model.export.ExportModelConf;
 import kendzi.josm.kendzi3d.jogl.model.lod.DLODSuport;
 import kendzi.josm.kendzi3d.jogl.model.lod.LOD;
-import kendzi.josm.kendzi3d.jogl.model.roof.mk.DormerTypeBuilder;
 import kendzi.josm.kendzi3d.jogl.model.roof.mk.RoofDebugOut;
 import kendzi.josm.kendzi3d.jogl.model.roof.mk.RoofOutput;
 import kendzi.josm.kendzi3d.jogl.model.roof.mk.RoofTypeOutput;
-import kendzi.josm.kendzi3d.jogl.model.roof.mk.dormer.RoofDormerTypeOutput;
-import kendzi.josm.kendzi3d.jogl.model.roof.mk.model.DormerRoofModel;
-import kendzi.josm.kendzi3d.jogl.model.roof.mk.type.RoofType5v6;
-import kendzi.josm.kendzi3d.jogl.model.roof.mk.type.RoofTypeBuilder;
 import kendzi.josm.kendzi3d.jogl.model.tmp.AbstractPointModel;
 import kendzi.josm.kendzi3d.jogl.selection.BuildingSelection;
 import kendzi.josm.kendzi3d.jogl.selection.Selection;
@@ -65,24 +53,22 @@ import kendzi.josm.kendzi3d.jogl.selection.editor.Editor;
 import kendzi.josm.kendzi3d.service.MetadataCacheService;
 import kendzi.josm.kendzi3d.service.ModelCacheService;
 import kendzi.josm.kendzi3d.util.ModelUtil;
-import kendzi.kendzi3d.josm.model.direction.AngleDirection;
 import kendzi.kendzi3d.josm.model.perspective.Perspective;
 import kendzi.math.geometry.line.LineSegment3d;
 import kendzi.math.geometry.point.TransformationMatrix3d;
-import kendzi.math.geometry.polygon.PolygonWithHolesList2d;
 
 import org.apache.log4j.Logger;
-import org.ejml.ops.SpecializedOps;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
+import org.openstreetmap.josm.data.projection.datum.CentricDatum;
 
 /**
  * Cylinder for nodes.
  * 
  * @author Andrei Maneasa
  */
-public class Cylinder extends AbstractPointModel implements DLODSuport {
+public class Cylinder extends /*AbstractModel*/AbstractPointModel implements DLODSuport {
 
 	/** Log. */
 	private static final Logger log = Logger.getLogger(Cylinder.class);
@@ -129,6 +115,12 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 	private List<NewCylinderDebug> debug = new ArrayList<NewCylinderDebug>();
 
+	private Node node;
+
+	private double maxY;
+
+	private Bounds boundsTest;
+
 	/**
 	 * @param node
 	 *            node
@@ -153,6 +145,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		this.metadataCacheService = pMetadataCacheService;
 		this.modelCacheService = pModelCacheService;
 
+		this.node= node;
 	}
 
 	/**
@@ -177,165 +170,11 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			this.bm = bm;
 
 		}
-
-		//this.edges = new ArrayList<LineSegment3d>();
-
-		//		if (bm != null) {
-
-		//BuildingElementsTextureManager tm = new CacheOsmBuildingElementsTextureMenager(this.textureLibraryStorageService);
-
-		//	BuildingOutput buildModel = BuildingBuilder.buildModel(bm, tm);
-
-		//			Model model = buildModel.getModel();
-		//			model.useLight = true;
-		//			model.useTexture = true;
-
-		//this.model = model;
 		this.buildModel = true;
 
-		//			this.debug.clear();
-		//
-		//		this.edges = new ArrayList<LineSegment3d>();
-		//
-		//			if (buildModel.getBuildingPartOutput() != null) {
-		//				for (BuildingPartOutput bo : buildModel.getBuildingPartOutput()) {
-		//					//this.debug.add(new NewBuildingDebug(bo.getRoofDebugOut()));
-		//					if (bo.getEdges() != null) {
-		//						edges.addAll(bo.getEdges());
-		//					}
-		//				}
-		//			}
-		//		}
-
-
-
-		BuildingOutput buildModel = buildModel(this.bm);
-
-		Model model = buildModel.getModel();
-		
-		model.useLight = true;
-		model.useTexture = true;
-
-		this.model = model;
 
 	}
 
-
-	public static BuildingOutput buildModel(BuildingModel buildingModel){
-
-		List<BuildingPartOutput> partsOut = new ArrayList<BuildingPartOutput>();
-
-		ModelFactory mf = ModelFactory.modelBuilder();
-
-		if (buildingModel.getNodeParts() != null) {
-			
-			for (NodeBuildingPart bp : buildingModel.getNodeParts()) {
-
-				partsOut.add(builNodePart(bp));
-			}
-		}
-
-		BuildingOutput out = new BuildingOutput();
-		out.setModel(mf.toModel());
-		out.setBuildingPartOutput(partsOut);
-		return out;
-
-	}
-
-	private static BuildingPartOutput builNodePart(NodeBuildingPart bp) {
-
-		BuildingPartOutput partOutput = new BuildingPartOutput();
-		if (bp instanceof SphereNodeBuildingPart) {
-
-			RoofOutput roofOutput = build(bp);
-			partOutput.setRoofDebugOut(roofOutput.getDebug());
-			partOutput.setEdges(roofOutput.getEdges());
-
-			//	SphereNodeBuildingPart sphere = (SphereNodeBuildingPart) bp;
-			//			int pIcross = 12;
-			//			int icross = pIcross  + 1;
-			//
-			//			double height = sphere.getHeight();
-			//			double radius = sphere.getRadius();
-			//			Point2d point = sphere.getPoint();
-			//
-			//			// create cross section
-			//			Point2d [] crossSection = new Point2d[icross];
-			//			for (int i = 0; i < icross; i++) {
-			//				double a = Math.toRadians(180) / (icross - 1) * i - Math.toRadians(90);
-			//
-			//				crossSection[i] = new Point2d(Math.cos(a) * radius, Math.sin(a) * radius + height);
-			//			}
-			//			int pIsection = 12;
-			//			RoofType5v6.buildRotaryShape(mesh, point, pIsection, crossSection, true);
-		}
-		//return new BuildingPartOutput();
-		return partOutput;
-	}
-
-	//	private static BuildingPartOutput buildPart(NodeBuildingPart bp){
-	//		
-	//		BuildingPartOutput partOutput = new BuildingPartOutput();
-	//		
-	//		RoofOutput roofOutput = build(bp);
-	//		partOutput.setRoofDebugOut(roofOutput.getDebug());
-	//		partOutput.setEdges(roofOutput.getEdges());
-	//
-	//		return partOutput;
-	//	}
-
-
-		public static RoofOutput build(NodeBuildingPart buildingPart){
-	
-//			PolygonWithHolesList2d buildingPolygon = BuildingUtil.buildingPartToPolygonWithHoles(buildingPart);
-	
-//			List<Point2d> polygon = buildingPolygon.getOuter().getPoints();
-			Point2d startPoint = buildingPart.getPoint();
-					
-//					polygon.get(0);
-	
-			double height =  buildingPart.getHeight();
-			
-//			DormerRoofModel roof = (DormerRoofModel) buildingPart.getRoof();
-//			RoofTypeBuilder roofType = RoofTypeBuilderRegistry.selectBuilder(roof.getRoofType());
-	
-			double maxHeight = buildingPart.getHeight();
-	
-//			RoofTypeOutput rto = roofType.buildRoof(startPoint, buildingPolygon, roof, maxHeight, null);
-	
-//			double minHeight = maxHeight - rto.getHeight();
-	
-//			List<RoofDormerTypeOutput> roofExtensionsList = DormerTypeBuilder.build(rto.getRoofHooksSpaces(),
-//					roof, roof.getMeasurements(), null);
-	
-//			RoofDebugOut debug = buildDebugInfo(rto, startPoint, height, buildingPart);
-	
-			RoofOutput out = new RoofOutput();
-			out.setHeight(height);
-//			out.setDebug(debug);
-	
-			return out;
-		}
-
-	private static RoofDebugOut buildDebugInfo(RoofTypeOutput rto, 
-			Point2d startPoint, double height, NodeBuildingPart node) {
-
-		Point3d startPointMark = new Point3d(startPoint.x, height, -startPoint.y);
-
-		List<Point3d> rectangleTransf = new ArrayList<Point3d>();
-
-		List<Point3d> rectangle = rto.getRectangle();
-		for (int i = 0; i < rectangle.size(); i++) {
-			Point3d p = rectangle.get(i);
-
-			rectangleTransf.add(TransformationMatrix3d.transform(p, rto.getTransformationMatrix()));
-		}
-		rto.setRectangle(rectangleTransf);
-		RoofDebugOut out = new RoofDebugOut();
-		out.setBbox(rectangleTransf);
-		out.setStartPoint(startPointMark);
-		return out;
-	}
 	@Override
 	public void buildModel(LOD pLod) {
 
@@ -351,22 +190,20 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		}
 
 		boundModel = null;
-
 		boundModel = findSimpleModel(this.type, pLod, this.metadataCacheService, this.modelCacheService);
 
-
-		//		setupScale(model, maxHeight, this.minHeight);
+		//		setupScale(boundModel, maxHeight, this.minHeight);
 
 		if(maxHeight == 0){
 
 			this.scale.x = 0;
 			this.scale.y = 0;
 			this.scale.z = 0;
-			angle = 0;
+			//angle = 0;
 
 		}else{
 			setupHeight(boundModel, maxHeight, minHeight);
-			angle = 45;
+			//angle = 180;
 		}
 
 		this.modelLod.put(pLod, boundModel);
@@ -400,36 +237,6 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		public void preview(double newValue) {
 			log.info("preview: " + newValue);
 
-			if (bm != null /*&& bm.getParts() != null*/
-					/*&& bm.getParts().size() > 0*/) {
-
-
-				//				bm.getParts().get
-				//	bm.getNodeParts().get(0).getHeight();
-
-
-				log.info("");
-
-				//List<NodeBuildingPart> bp = bm.getNodeParts();
-
-
-				//				SphereNodeBuildingPart bnp = (SphereNodeBuildingPart) bm.getNodeParts();
-				//				bnp.setHeight(newValue);
-
-				//				List<NodeBuildingPart> bpp = (List<NodeBuildingPart>) new SphereNodeBuildingPart();
-				//				bpp.get(0).setCylinderHeight(newValue);
-
-				//				bm = (BuildingModel) bpp;
-				//				bp = (List<NodeBuildingPart>) bnp.setHeight(newValue);
-
-				//				bp.get(0).setCylinderHeight(newValue);
-
-
-
-				//				bm = (BuildingModel) bp;
-				//				bm.setParts(bp);
-				//				bm.getParts().get(0).setMaxHeight(newValue);
-			}
 			Cylinder.this.preview = true;
 			Cylinder.this.buildModel = false;
 
@@ -437,42 +244,87 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 		}
 	}
+
+
 	private List<Selection> parseSelection(long wayId, final BuildingModel bm) {
+
+		Double maxHeight = getMaxHeight(this.node, this.type, this.metadataCacheService);
+		//		double maxHeight = getHeight(this.node, this.type, this.metadataCacheService);
+
 		BoundsFactory bf = new BoundsFactory();
 
-		List<BuildingPart> parts = bm.getParts();
-		if (parts != null) {
-			for (BuildingPart bp : parts) {
-				List<WallPart> wallParts = bp.getWall().getWallParts();
-				for (WallPart wp : wallParts) {
-					for (WallNode wn : wp.getNodes()) {
+		//	List<BuildingPart> parts = bm.getParts();
 
-						Point2d p = wn.getPoint();
+		List<NodeBuildingPart> part = bm.getNodeParts();
 
-						bf.addPoint(p.x, bp.getDefaultMinHeight(), -p.y);
-						bf.addPoint(p.x, bp.getDefaultMaxHeight(), -p.y);
+		if (part != null) {
+			for (NodeBuildingPart np : part) {
 
-					}
-				}
+				Point2d p = np.getPoint();
+				bf.addPoint(p.x, minHeight, -p.y); //np.getDefaultMinHeight()
+				bf.addPoint(p.x, maxHeight, -p.y);//bp.getDefaultMaxHeight()
+
+
+				//				List<WallPart> wallParts = bp.getWall().getWallParts();
+				//				for (WallPart wp : wallParts) {
+				//					for (WallNode wn : wp.getNodes()) {
+
+				//						Point2d p = wn.getPoint();
+				//
+				//						bf.addPoint(p.x, bp.getDefaultMinHeight(), -p.y);
+				//						bf.addPoint(p.x, bp.getDefaultMaxHeight(), -p.y);
+
+				// trebe sa lucrez aici la cum se adauga bounds
+				// face un bound min si unu max, cu add point verifica daca e vreunu mai mare sau mai mic
+				// eu trebe adaug la pointul ala 3D din clasa AbstractPointModel componenta Y (height) min si max
+				// 
+
+				//					}
+				//				}
 			}
 		}
 
-		Bounds bounds = boundModel.getBounds();
+		Bounds boundsInitial = boundModel.getBounds();
+		Bounds bounds = bf.toBounds();
+		this.boundsTest = bounds;
 
-		this.bounds = bounds;
+		maxY = bounds.getCenter().y;
+
+		this.bounds = boundsInitial;
 
 		if (this.node != null) {
 			final ArrowEditorJosmImp ae = new NewArrowEditorJosmImp();
+						Point3d point = new Point3d();
+						point.set(point3D.x, this.scale.y, point3D.z);
 
-			ae.setPoint(bounds.getMin());
+			ae.setPoint(new Point3d(point3D.x, 0, point3D.z));
+//			ae.setPoint(bounds.getMin());
 			ae.setVector(new Vector3d(0, 1, 0));
 			ae.setLength(bounds.max.y);
+			//			Map<String, String> a = node.getKeys();
+			//			Collection<String> cylinderHeight = null;
+			//			double d = height;
+			//			if (a.containsKey("height")){
+			//				cylinderHeight = a.values();
+			//				String s = cylinderHeight.toString();
+			//				int i = s.indexOf(",");
+			//				String str = s.substring(1, i);
+			//				d = Double.valueOf(str);
+			//			}
+			//			// plus 2 for visualisation all the arrow
+			//			if(minHeight != 0){
+			//				ae.setLength(d + minHeight + 2);
+			//			}else{
+			//				ae.setLength(d + 2);
+			//			}
 			ae.setFildName("height");
 			ae.setPrimitiveId(this.node.getUniqueId());
 			ae.setPrimitiveType(OsmPrimitiveType.NODE);
 
 			return Arrays.<Selection> asList(new MyBuildingSelection(wayId,
-					bounds.getCenter(), bounds.getRadius(), ae) );
+					point/*bounds.getCenter()*/, bounds.getMin(), bounds.getMax(), bounds.getRadius(),
+					minHeight, scale, ae));
+
 		}
 		return Collections.emptyList();
 	}
@@ -481,12 +333,14 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 		private ArrowEditorJosmImp ae;
 
-		public MyBuildingSelection(long wayId, Point3d center, double radius) {
-			super(wayId, center, radius);
+		public MyBuildingSelection(long wayId, Point3d center, Point3d boundMin, Point3d boundMax, double radius,
+				double minHeight,Vector3d scale) {
+			super(wayId, center, boundMin, boundMax, radius, minHeight, scale);
 		}
 
-		public MyBuildingSelection(long wayId, Point3d center, double radius, ArrowEditorJosmImp ae) {
-			this(wayId, center, radius);
+		public MyBuildingSelection(long wayId, Point3d center, Point3d boundMin, Point3d boundMax, double radius, 
+				double minHeight, Vector3d scale, ArrowEditorJosmImp ae) {
+			this(wayId, center, boundMin, boundMax, radius, minHeight, scale);
 			this.ae = ae;
 		}
 
@@ -507,7 +361,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 	private void setupHeight(Model model2, double maxHeight, double minHeight) {
 
-		double height = maxHeight ;//- minHeight;
+		double height = maxHeight; //- minHeight;
 
 		Bounds bounds = model2.getBounds();
 
@@ -582,7 +436,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		{
 			try {
 				Model loadModel = modelCacheService.loadModel(model);
-				//				loadModel.useLight = true;
+				loadModel.useLight = true;
 				setAmbientColor(loadModel);
 				return loadModel;
 
@@ -619,21 +473,12 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		Double nodeHeight = ModelUtil.getObjHeight(node, null);
 
 		Double typeHeight = metadataCacheService.getPropertitesDouble("cylinder.type.height", null, type);
-		//	Double unknownHeight = metadataCacheService.getPropertitesDouble("cylinder.type.unknown.{0}.height", null, (String) null);
 
-		// XXX add StringUtil
 		if (nodeHeight != null) {
 			height = nodeHeight;
 		} else if (typeHeight != null) {
 			height = typeHeight;
 		} 
-		//		else {
-		//			height = unknownHeight;
-		//		}
-
-		//		if (height == null) {
-		//			height = 1d;
-		//		}
 
 		return height;
 	}
@@ -643,16 +488,18 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 	public void draw(GL2 gl, Camera camera, LOD pLod) {
 
 		this.model =  this.modelLod.get(pLod);
+		//model.setBounds(this.boundsTest);
 		Model model2 = model;
 		if (model2 != null) {
 
+			Double maxHeight = getMaxHeight(this.node, this.type, this.metadataCacheService);
+
 			gl.glPushMatrix();
-			gl.glTranslated(this.getGlobalX(), this.minHeight, -this.getGlobalY());
+			gl.glTranslated(this.getGlobalX(), minHeight/*(this.boundsTest.getCenter().y)-maxHeight/2*/, -this.getGlobalY());
 
 			gl.glEnable(GLLightingFunc.GL_NORMALIZE);
-			gl.glScaled(1,1,1);
-			//	gl.glRotated(angle, this.scale.x, this.scale.y, this.scale.z);
-
+			//gl.glScaled(1,1,1);
+			//gl.glRotated(angle, this.scale.x, this.scale.y, this.scale.z);
 			gl.glScaled(this.scale.x, this.scale.y, this.scale.z);
 			this.modelRender.render(gl, model2);
 
@@ -662,7 +509,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 				gl.glLineWidth(6);
 
-				DrawUtil.drawBox(gl, this.bounds.getMax(), this.bounds.getMin());
+				DrawUtil.drawBox(gl,this.bounds.getMax(), this.bounds.getMin());
 
 			}
 
@@ -671,12 +518,6 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			// rotate in the opposite direction to the camera
 
 			gl.glPopMatrix();
-
-			//			if (this.modelRender.isDebugging()/* && this.debug != null*/) {
-			//				for (NewCylinderDebug d : this.debug) {
-			//					d.drawDebugRoof(gl);
-			//				}
-			//			}
 
 		}
 	}
@@ -691,54 +532,6 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 	@Override
 	public void draw(GL2 pGl, Camera pCamera) {
-		//draw(pGl, pCamera, LOD.LOD1);
-
-		//		pGl.glPushMatrix();
-		//
-		//		pGl.glTranslated(this.getGlobalX(), 0, -this.getGlobalY());
-		//
-		//		pGl.glColor3f((float) 188 / 255, (float) 169 / 255, (float) 169 / 255);
-		//
-		//		Model m = (Model) this.modelLod.values();
-		//
-		//		this.modelRender.render(pGl, m);
-		//
-		//		if (this.selected && this.bounds != null) {
-		//
-		//			pGl.glColor3fv(Color.RED.darker().getRGBComponents(new float[4]), 0);
-		//
-		//			pGl.glLineWidth(6);
-		//
-		//			DrawUtil.drawBox(pGl, this.bounds.getMax(), this.bounds.getMin());
-		//		}
-
-		//		if (edges != null) {
-		//		pGl.glTranslated(0, 0.1, 0);
-		//
-		//		pGl.glLineWidth(6);
-		//
-		//		for (LineSegment3d line : edges) {
-		//			pGl.glColor3fv(Color.RED.darker()
-		//					.getRGBComponents(new float[4]), 0);
-		//
-		//			pGl.glBegin(GL.GL_LINES);
-		//
-		//			pGl.glVertex3d(line.getBegin().x, line.getBegin().y,
-		//					line.getBegin().z);
-		//			pGl.glVertex3d(line.getEnd().x, line.getEnd().y,
-		//					line.getEnd().z);
-		//
-		//			pGl.glEnd();
-		//		}
-		//		}
-
-		//		pGl.glPopMatrix();
-
-		// if (this.modelRender.isDebugging() && this.debug != null) {
-		// for (NewBuildingDebug d : this.debug) {
-		// d.drawDebugRoof(pGl);
-		// }
-		// }
 
 	}
 

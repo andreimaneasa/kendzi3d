@@ -30,6 +30,7 @@ import kendzi.josm.kendzi3d.jogl.model.DrawableModel;
 import kendzi.josm.kendzi3d.jogl.model.Perspective3D;
 import kendzi.josm.kendzi3d.jogl.model.lod.DLODSuport;
 import kendzi.josm.kendzi3d.jogl.model.lod.LOD;
+import kendzi.josm.kendzi3d.jogl.model.shape.Cylinder;
 import kendzi.josm.kendzi3d.jogl.selection.Selectable;
 import kendzi.josm.kendzi3d.jogl.selection.Selection;
 import kendzi.josm.kendzi3d.service.MetadataCacheService;
@@ -569,21 +570,41 @@ public class RenderJOSM implements DataSetListenerAdapter.Listener{
 					double dy = p.y;
 					double dz = p.z;
 
-					gl.glLineWidth(1);
-					gl.glTranslated(dx, dy, dz);
+					gl.glLineWidth(5);
+					
+					//move debug sphere where is the object
+					gl.glTranslated(dx,/* s.getMinHeight()+*/dy, dz);
 
-					DrawUtil.drawDotOuterY(gl, s.getRadius(), 24);
+					gl.glScaled(s.getScale().x, s.getScale().y, s.getScale().z);
 
+					DrawUtil.drawDotOuterY(gl, s.getRadius(), 3004);
 					gl.glRotated(90d, 1d, 0, 0);
-					DrawUtil.drawDotOuterY(gl, s.getRadius(), 24);
+					DrawUtil.drawDotOuterY(gl, s.getRadius(), 3004);
 
 					gl.glRotated(90d, 0, 0, 1d);
-					DrawUtil.drawDotOuterY(gl, s.getRadius(), 24);
+					DrawUtil.drawDotOuterY(gl, s.getRadius(), 3004);
 
 					gl.glPopMatrix();
 				}
 			}
 
+			//			if(r instanceof Cylinder){
+			//				for (Selection s : ((Selectable) r).getSelection()) {
+			//					
+			//					
+			//					gl.glPushMatrix();
+			//					
+			//					gl.glLineWidth(6);
+			//					
+			//					Point3d boundMin = s.getBoundMin();
+			//					Point3d boundMax= s.getBoundMax();
+			//					
+			//					DrawUtil.drawBox(gl, boundMin, boundMax);
+			//					
+			//					gl.glPopMatrix();
+			//					
+			//				}
+			//			}
 		}
 
 	}
@@ -595,27 +616,29 @@ public class RenderJOSM implements DataSetListenerAdapter.Listener{
 
 		for (WorldObject r : models) {
 			if (r instanceof Selectable) {
-				for (Selection s : ((Selectable) r).getSelection()) {
-					Double intersect = Ray3dUtil.intersect(selectRay,
-							s.getCenter(), s.getRadius());
+//				if (r instanceof Cylinder) {
+					for (Selection s : ((Selectable) r).getSelection()) {
+						Double intersect = Ray3dUtil.intersect(selectRay,
+								s.getCenter(), s.getRadius());
 
-					if (intersect == null) {
-						continue;
+						if (intersect == null) {
+							continue;
+						}
+						if (intersect < min) {
+							selection = s;
+							min = intersect;
+						}
 					}
-					if (intersect < min) {
-						selection = s;
-						min = intersect;
-					}
-				}
+//				}
 			}
 		}
 
 		Selection last = this.lastSelection;
 
 		if (selection != null) {
-			
+
 			log.info("selected object: " + selection);
-			
+
 			// FIXME
 			if (last != selection) {
 				// FIXME

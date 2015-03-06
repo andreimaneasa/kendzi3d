@@ -21,14 +21,19 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 public abstract class AbstractPointModel extends AbstractModel {
 
     protected Node node;
+    
+    protected Point3d point3D;
 
     public AbstractPointModel(Node node, Perspective perspective) {
         super(perspective);
 
+        //point3D = null;
         Point2d point = perspective.calcPoint(node);
 
         setPoint(new Point3d(point.x, 0, -point.y));
 
+        point3D = new Point3d(point.x, 0, -point.y);
+        
         this.node = node;
 
         this.radius = 1.0;

@@ -11,6 +11,7 @@ package kendzi.josm.kendzi3d.jogl.selection;
 import java.util.List;
 
 import javax.vecmath.Point3d;
+import javax.vecmath.Vector3d;
 
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 
@@ -18,9 +19,13 @@ import kendzi.josm.kendzi3d.jogl.selection.editor.Editor;
 
 public interface Selection {
 	Point3d getCenter();
+	Point3d getBoundMin();
+	Point3d getBoundMax();
 	double getRadius();
 	long getWayId();
-    
+    double getMinHeight();
+    Vector3d getScale();
+	
 	void select(boolean selected);
 
 	List<Editor> getEditors();
