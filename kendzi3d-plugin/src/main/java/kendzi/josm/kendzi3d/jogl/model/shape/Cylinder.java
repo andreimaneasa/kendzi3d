@@ -68,7 +68,7 @@ import org.openstreetmap.josm.data.projection.datum.CentricDatum;
  * 
  * @author Andrei Maneasa
  */
-public class Cylinder extends /*AbstractModel*/AbstractPointModel implements DLODSuport {
+public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 	/** Log. */
 	private static final Logger log = Logger.getLogger(Cylinder.class);
@@ -89,6 +89,7 @@ public class Cylinder extends /*AbstractModel*/AbstractPointModel implements DLO
 	private MetadataCacheService metadataCacheService;
 
 	private EnumMap<LOD, Model> modelLod;
+
 	private String type;
 
 	Vector3d scale;
@@ -101,8 +102,6 @@ public class Cylinder extends /*AbstractModel*/AbstractPointModel implements DLO
 
 	private boolean selected;
 
-	private List<LineSegment3d> edges;
-
 	private Model model;
 
 	private BuildingModel bm;
@@ -113,13 +112,9 @@ public class Cylinder extends /*AbstractModel*/AbstractPointModel implements DLO
 
 	private double angle = 0;
 
-	private List<NewCylinderDebug> debug = new ArrayList<NewCylinderDebug>();
+	//	private List<NewCylinderDebug> debug = new ArrayList<NewCylinderDebug>();
 
 	private Node node;
-
-	private double maxY;
-
-	private Bounds boundsTest;
 
 	/**
 	 * @param node
@@ -148,15 +143,10 @@ public class Cylinder extends /*AbstractModel*/AbstractPointModel implements DLO
 		this.node= node;
 	}
 
-	/**
-	 * Texture library service.
-	 */
-	private TextureLibraryStorageService textureLibraryStorageService;
-
 	@Override
 	public void buildWorldObject() {
 
-		buildModel(LOD.LOD1);
+		buildModel(LOD.LOD2);
 
 		BuildingModel bm = this.bm;
 
@@ -164,7 +154,7 @@ public class Cylinder extends /*AbstractModel*/AbstractPointModel implements DLO
 
 			bm = BuildingParser.parseBuildingNode(this.node, this.perspective);
 
-			this.selection = parseSelection(this.node.getId(), bm);
+			this.selection = parseSelection(this.node.getId(), bm, this.boundModel);
 
 			this.preview = false;
 			this.bm = bm;
@@ -172,40 +162,30 @@ public class Cylinder extends /*AbstractModel*/AbstractPointModel implements DLO
 		}
 		this.buildModel = true;
 
-
 	}
 
 	@Override
 	public void buildModel(LOD pLod) {
 
 		this.type = this.node.get("type");
-
 		this.minHeight= getMinHeight(this.node, this.type, this.metadataCacheService); 
-
-		Double maxHeight = getMaxHeight(this.node, this.type, this.metadataCacheService);
-
-		if (maxHeight == null) {
-			double height = getHeight(this.node, this.type, this.metadataCacheService);
-			maxHeight = /*this.minHeight +*/ height;
-		}
 
 		boundModel = null;
 		boundModel = findSimpleModel(this.type, pLod, this.metadataCacheService, this.modelCacheService);
 
 		//		setupScale(boundModel, maxHeight, this.minHeight);
 
-		if(maxHeight == 0){
+		if(cylinderHeight() == 0){
 
 			this.scale.x = 0;
 			this.scale.y = 0;
 			this.scale.z = 0;
-			//angle = 0;
+			angle = 0;
 
 		}else{
-			setupHeight(boundModel, maxHeight, minHeight);
-			//angle = 180;
+			setupHeight(boundModel, cylinderHeight());
+			angle = 180;
 		}
-
 		this.modelLod.put(pLod, boundModel);
 	}
 
@@ -244,85 +224,65 @@ public class Cylinder extends /*AbstractModel*/AbstractPointModel implements DLO
 
 		}
 	}
-
-
-	private List<Selection> parseSelection(long wayId, final BuildingModel bm) {
+/**
+ * test parameter "height" from JOSM 
+ * if it's null get default height from
+ *  kendzi-plugin metadata.proprieties
+ * @return height of Cylinder
+ */
+	private double cylinderHeight(){
 
 		Double maxHeight = getMaxHeight(this.node, this.type, this.metadataCacheService);
-		//		double maxHeight = getHeight(this.node, this.type, this.metadataCacheService);
 
+		if (maxHeight == null) {
+			maxHeight = getHeight(this.node, this.type, this.metadataCacheService);
+		}
+		return maxHeight;
+	}
+
+	private List<Selection> parseSelection(long wayId, final BuildingModel bm, Model model) {
 		BoundsFactory bf = new BoundsFactory();
-
-		//	List<BuildingPart> parts = bm.getParts();
-
+		Bounds bnd = model.getBounds();
 		List<NodeBuildingPart> part = bm.getNodeParts();
 
 		if (part != null) {
 			for (NodeBuildingPart np : part) {
 
 				Point2d p = np.getPoint();
-				bf.addPoint(p.x, minHeight, -p.y); //np.getDefaultMinHeight()
-				bf.addPoint(p.x, maxHeight, -p.y);//bp.getDefaultMaxHeight()
-
-
-				//				List<WallPart> wallParts = bp.getWall().getWallParts();
-				//				for (WallPart wp : wallParts) {
-				//					for (WallNode wn : wp.getNodes()) {
-
-				//						Point2d p = wn.getPoint();
-				//
-				//						bf.addPoint(p.x, bp.getDefaultMinHeight(), -p.y);
-				//						bf.addPoint(p.x, bp.getDefaultMaxHeight(), -p.y);
-
-				// trebe sa lucrez aici la cum se adauga bounds
-				// face un bound min si unu max, cu add point verifica daca e vreunu mai mare sau mai mic
-				// eu trebe adaug la pointul ala 3D din clasa AbstractPointModel componenta Y (height) min si max
-				// 
-
-				//					}
-				//				}
+				bf.addPoint(p.x, minHeight, -p.y); 
+				bf.addPoint(p.x, cylinderHeight(), -p.y);
+				bf.addPoint(bnd.max.x, bnd.max.y, -bnd.max.z);
 			}
 		}
 
 		Bounds boundsInitial = boundModel.getBounds();
 		Bounds bounds = bf.toBounds();
-		this.boundsTest = bounds;
-
-		maxY = bounds.getCenter().y;
-
 		this.bounds = boundsInitial;
 
 		if (this.node != null) {
 			final ArrowEditorJosmImp ae = new NewArrowEditorJosmImp();
-						Point3d point = new Point3d();
-						point.set(point3D.x, this.scale.y, point3D.z);
-
-			ae.setPoint(new Point3d(point3D.x, 0, point3D.z));
-//			ae.setPoint(bounds.getMin());
+			Point3d point = new Point3d();
+			point.set(point3D.x, this.scale.y + minHeight, point3D.z);
+			ae.setPoint(new Point3d(point3D.x, minHeight, point3D.z));
 			ae.setVector(new Vector3d(0, 1, 0));
-			ae.setLength(bounds.max.y);
-			//			Map<String, String> a = node.getKeys();
-			//			Collection<String> cylinderHeight = null;
-			//			double d = height;
-			//			if (a.containsKey("height")){
-			//				cylinderHeight = a.values();
-			//				String s = cylinderHeight.toString();
-			//				int i = s.indexOf(",");
-			//				String str = s.substring(1, i);
-			//				d = Double.valueOf(str);
-			//			}
-			//			// plus 2 for visualisation all the arrow
-			//			if(minHeight != 0){
-			//				ae.setLength(d + minHeight + 2);
-			//			}else{
-			//				ae.setLength(d + 2);
-			//			}
+//			Map<String, String> a = node.getKeys();
+//			Collection<String> cylinderHeight = null;
+//			double d = cylinderHeight();
+//			if (a.containsKey("height")){
+//				cylinderHeight = a.values();
+//				String s = cylinderHeight.toString();
+//				int i = s.indexOf(",");
+//				String str = s.substring(1, i);
+//				d = Double.valueOf(str);
+//			}
+			// plus 2 for visualisation all the arrow
+			ae.setLength(cylinderHeight() + 2);
 			ae.setFildName("height");
 			ae.setPrimitiveId(this.node.getUniqueId());
 			ae.setPrimitiveType(OsmPrimitiveType.NODE);
 
 			return Arrays.<Selection> asList(new MyBuildingSelection(wayId,
-					point/*bounds.getCenter()*/, bounds.getMin(), bounds.getMax(), bounds.getRadius(),
+					point, bounds.getMin(), bounds.getMax(), bounds.getRadius(),
 					minHeight, scale, ae));
 
 		}
@@ -359,17 +319,15 @@ public class Cylinder extends /*AbstractModel*/AbstractPointModel implements DLO
 		}
 	}
 
-	private void setupHeight(Model model2, double maxHeight, double minHeight) {
+	private void setupHeight(Model model2, double maxHeight) {
 
-		double height = maxHeight; //- minHeight;
+		double height = maxHeight;
 
 		Bounds bounds = model2.getBounds();
 
 		double modelHeight = bounds.max.y;
 
 		double modelScaleHeight = height / modelHeight;
-
-		//double modelScaleWidht = modelScaleHeight;
 
 		double modelScaleWidhtX = bounds.radius/bounds.max.x;
 		double modelScaleWidhtZ = bounds.radius/bounds.max.z;
@@ -488,18 +446,14 @@ public class Cylinder extends /*AbstractModel*/AbstractPointModel implements DLO
 	public void draw(GL2 gl, Camera camera, LOD pLod) {
 
 		this.model =  this.modelLod.get(pLod);
-		//model.setBounds(this.boundsTest);
 		Model model2 = model;
 		if (model2 != null) {
 
-			Double maxHeight = getMaxHeight(this.node, this.type, this.metadataCacheService);
-
 			gl.glPushMatrix();
-			gl.glTranslated(this.getGlobalX(), minHeight/*(this.boundsTest.getCenter().y)-maxHeight/2*/, -this.getGlobalY());
+			gl.glTranslated(this.getGlobalX(), minHeight, -this.getGlobalY());
 
 			gl.glEnable(GLLightingFunc.GL_NORMALIZE);
-			//gl.glScaled(1,1,1);
-			//gl.glRotated(angle, this.scale.x, this.scale.y, this.scale.z);
+//			gl.glRotated(angle, this.scale.x, this.scale.y, this.scale.z);
 			gl.glScaled(this.scale.x, this.scale.y, this.scale.z);
 			this.modelRender.render(gl, model2);
 

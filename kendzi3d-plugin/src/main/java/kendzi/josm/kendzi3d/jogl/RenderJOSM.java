@@ -571,12 +571,11 @@ public class RenderJOSM implements DataSetListenerAdapter.Listener{
 					double dz = p.z;
 
 					gl.glLineWidth(5);
-					
+
 					//move debug sphere where is the object
-					gl.glTranslated(dx,/* s.getMinHeight()+*/dy, dz);
-
-					gl.glScaled(s.getScale().x, s.getScale().y, s.getScale().z);
-
+					gl.glTranslated(dx, dy, dz);
+					//					gl.glScaled(/*s.getScale().x*/1, s.getScale().y,1);
+					//					gl.glScaled(s.getScale().x, 1, s.getScale().z);
 					DrawUtil.drawDotOuterY(gl, s.getRadius(), 3004);
 					gl.glRotated(90d, 1d, 0, 0);
 					DrawUtil.drawDotOuterY(gl, s.getRadius(), 3004);
@@ -587,26 +586,7 @@ public class RenderJOSM implements DataSetListenerAdapter.Listener{
 					gl.glPopMatrix();
 				}
 			}
-
-			//			if(r instanceof Cylinder){
-			//				for (Selection s : ((Selectable) r).getSelection()) {
-			//					
-			//					
-			//					gl.glPushMatrix();
-			//					
-			//					gl.glLineWidth(6);
-			//					
-			//					Point3d boundMin = s.getBoundMin();
-			//					Point3d boundMax= s.getBoundMax();
-			//					
-			//					DrawUtil.drawBox(gl, boundMin, boundMax);
-			//					
-			//					gl.glPopMatrix();
-			//					
-			//				}
-			//			}
 		}
-
 	}
 
 
@@ -616,20 +596,18 @@ public class RenderJOSM implements DataSetListenerAdapter.Listener{
 
 		for (WorldObject r : models) {
 			if (r instanceof Selectable) {
-//				if (r instanceof Cylinder) {
-					for (Selection s : ((Selectable) r).getSelection()) {
-						Double intersect = Ray3dUtil.intersect(selectRay,
-								s.getCenter(), s.getRadius());
+				for (Selection s : ((Selectable) r).getSelection()) {
+					Double intersect = Ray3dUtil.intersect(selectRay,
+							s.getCenter(), s.getRadius());
 
-						if (intersect == null) {
-							continue;
-						}
-						if (intersect < min) {
-							selection = s;
-							min = intersect;
-						}
+					if (intersect == null) {
+						continue;
 					}
-//				}
+					if (intersect < min) {
+						selection = s;
+						min = intersect;
+					}
+				}
 			}
 		}
 
