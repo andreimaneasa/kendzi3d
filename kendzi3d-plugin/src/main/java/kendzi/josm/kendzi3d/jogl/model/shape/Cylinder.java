@@ -1,9 +1,7 @@
 package kendzi.josm.kendzi3d.jogl.model.shape;
 
 import java.awt.Color;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -29,22 +27,13 @@ import kendzi.jogl.texture.dto.TextureData;
 import kendzi.jogl.texture.library.OsmBuildingElementsTextureMenager;
 import kendzi.jogl.texture.library.TextureFindCriteria;
 import kendzi.jogl.texture.library.TextureLibraryStorageService;
-import kendzi.josm.kendzi3d.jogl.model.AbstractModel;
-import kendzi.josm.kendzi3d.jogl.model.building.builder.BuildingPartOutput;
 import kendzi.josm.kendzi3d.jogl.model.building.model.BuildingModel;
-import kendzi.josm.kendzi3d.jogl.model.building.model.BuildingPart;
 import kendzi.josm.kendzi3d.jogl.model.building.model.NodeBuildingPart;
-import kendzi.josm.kendzi3d.jogl.model.building.model.SphereNodeBuildingPart;
-import kendzi.josm.kendzi3d.jogl.model.building.model.WallNode;
-import kendzi.josm.kendzi3d.jogl.model.building.model.WallPart;
 import kendzi.josm.kendzi3d.jogl.model.building.parser.BuildingParser;
 import kendzi.josm.kendzi3d.jogl.model.export.ExportItem;
 import kendzi.josm.kendzi3d.jogl.model.export.ExportModelConf;
 import kendzi.josm.kendzi3d.jogl.model.lod.DLODSuport;
 import kendzi.josm.kendzi3d.jogl.model.lod.LOD;
-import kendzi.josm.kendzi3d.jogl.model.roof.mk.RoofDebugOut;
-import kendzi.josm.kendzi3d.jogl.model.roof.mk.RoofOutput;
-import kendzi.josm.kendzi3d.jogl.model.roof.mk.RoofTypeOutput;
 import kendzi.josm.kendzi3d.jogl.model.tmp.AbstractPointModel;
 import kendzi.josm.kendzi3d.jogl.selection.BuildingSelection;
 import kendzi.josm.kendzi3d.jogl.selection.Selection;
@@ -54,14 +43,11 @@ import kendzi.josm.kendzi3d.service.MetadataCacheService;
 import kendzi.josm.kendzi3d.service.ModelCacheService;
 import kendzi.josm.kendzi3d.util.ModelUtil;
 import kendzi.kendzi3d.josm.model.perspective.Perspective;
-import kendzi.math.geometry.line.LineSegment3d;
-import kendzi.math.geometry.point.TransformationMatrix3d;
 
 import org.apache.log4j.Logger;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
-import org.openstreetmap.josm.data.projection.datum.CentricDatum;
 
 /**
  * Cylinder for nodes.
@@ -112,9 +98,9 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 	private double angle = 0;
 
-	//	private List<NewCylinderDebug> debug = new ArrayList<NewCylinderDebug>();
-
 	private Node node;
+
+	private double scaleHeight;
 
 	/**
 	 * @param node
@@ -128,8 +114,8 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 	 * @param pModelCacheService
 	 *            model cache service
 	 */
-	public Cylinder(Node node, Perspective perspective, ModelRender pModelRender, MetadataCacheService pMetadataCacheService,
-			ModelCacheService pModelCacheService) {
+	public Cylinder(Node node, Perspective perspective, ModelRender pModelRender, 
+			MetadataCacheService pMetadataCacheService,ModelCacheService pModelCacheService) {
 		super(node, perspective);
 
 		this.modelLod = new EnumMap<LOD, Model>(LOD.class);
@@ -158,10 +144,8 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 			this.preview = false;
 			this.bm = bm;
-
 		}
 		this.buildModel = true;
-
 	}
 
 	@Override
@@ -173,20 +157,128 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		boundModel = null;
 		boundModel = findSimpleModel(this.type, pLod, this.metadataCacheService, this.modelCacheService);
 
-		//		setupScale(boundModel, maxHeight, this.minHeight);
-
-		if(cylinderHeight() == 0){
-
-			this.scale.x = 0;
-			this.scale.y = 0;
-			this.scale.z = 0;
-			angle = 0;
-
-		}else{
-			setupHeight(boundModel, cylinderHeight());
-			angle = 180;
+		if(rotation()){
+			this.angle = angleValue();
 		}
+		Vector3d scaleVec = new Vector3d();
+
+		if (scale()){
+			this.scaleHeight = scaleValue();
+			scaleVec = setupScale(boundModel, this.scaleHeight, minHeight);
+		} 
+
+		if (height() && scale()){
+	
+			double height = cylinderHeight();
+
+			Bounds bounds = boundModel.getBounds();
+
+			double modelHeight = bounds.max.y;
+
+			double modelScaleHeight = height / modelHeight;
+
+			double modelScaleWidhtX = bounds.radius/bounds.max.x;
+			double modelScaleWidhtZ = bounds.radius/bounds.max.z;
+
+			if(scaleVec.x != 0 && scaleVec.y != 0 && scaleVec.z != 0){
+				this.scale.x = scaleVec.x + modelScaleWidhtX;
+				this.scale.y = /*scaleVec.y +*/ modelScaleHeight;
+				this.scale.z = scaleVec.z + modelScaleWidhtZ;
+			}else{
+				this.scale.x = modelScaleWidhtX;
+				this.scale.y = modelScaleHeight;
+				this.scale.z = modelScaleWidhtZ;
+			}
+
+		}else if(height()){
+			setupHeight(boundModel, cylinderHeight());
+		}
+
 		this.modelLod.put(pLod, boundModel);
+	}
+
+	/**
+	 * 
+	 * @return if cylinder contains angle
+	 */
+	private boolean rotation(){
+		Map<String, String> str = this.node.getKeys();
+		if (str.containsKey("angle")||str.containsKey("Angle")||str.containsKey("ANGLE")){
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * 
+	 * @return angle value 
+	 */
+	private double angleValue(){
+		double value = 0;
+		String val = null;
+		Map<String, String> str = this.node.getKeys();
+		if (str.containsKey("angle")||str.containsKey("Angle")||str.containsKey("ANGLE")){
+			String val1 = str.get("angle");
+			String val2 = str.get("Angle");
+			String val3 = str.get("ANGLE");
+			if(val1 != null){
+				val = val1;
+			}else if (val2 != null){
+				val = val2;
+			}else {
+				val = val3; 
+			}
+			value = Double.valueOf(val);
+		}
+		return value;
+	}
+
+	/**
+	 * 
+	 * @return if cylinder contains scale
+	 */
+	private boolean scale(){
+		Map<String, String> str = this.node.getKeys();
+		if (str.containsKey("scale")||str.containsKey("Scale")||str.containsKey("SCALE")){
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * 
+	 * @return scale value 
+	 */
+	private double scaleValue(){
+		double value = 0;
+		String val = null;
+		Map<String, String> str = this.node.getKeys();
+		if (str.containsKey("scale")||str.containsKey("Scale")||str.containsKey("SCALE")){
+			String val1 = str.get("scale");
+			String val2 = str.get("Scale");
+			String val3 = str.get("SCALE");
+			if(val1 != null){
+				val = val1;
+			}else if (val2 != null){
+				val = val2;
+			}else {
+				val = val3; 
+			}
+			value = Double.valueOf(val);
+		}
+		return value;
+	}
+
+	/**
+	 * 
+	 * @return if cylinder contains height
+	 */
+	private boolean height(){
+		Map<String, String> str = this.node.getKeys();
+		if (str.containsKey("height")){
+			return true;
+		}
+		return false;
 	}
 
 	class CacheOsmBuildingElementsTextureMenager extends
@@ -224,12 +316,13 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 		}
 	}
-/**
- * test parameter "height" from JOSM 
- * if it's null get default height from
- *  kendzi-plugin metadata.proprieties
- * @return height of Cylinder
- */
+
+	/**
+	 * test parameter "height" from JOSM 
+	 * if it's null get default height from
+	 *  kendzi-plugin metadata.proprieties
+	 * @return height of Cylinder
+	 */
 	private double cylinderHeight(){
 
 		Double maxHeight = getMaxHeight(this.node, this.type, this.metadataCacheService);
@@ -249,9 +342,14 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			for (NodeBuildingPart np : part) {
 
 				Point2d p = np.getPoint();
-				bf.addPoint(p.x, minHeight, -p.y); 
-				bf.addPoint(p.x, cylinderHeight(), -p.y);
-				bf.addPoint(bnd.max.x, bnd.max.y, -bnd.max.z);
+				if (this.minHeight != 0){
+					bf.addPoint(p.x, this.minHeight, -p.y); 
+					bf.addPoint(p.x, cylinderHeight(), -p.y); 
+					bf.addPoint(bnd.min.x, bnd.min.y, -bnd.min.z);
+				}else{
+					bf.addPoint(p.x, this.minHeight, -p.y); 
+					bf.addPoint(p.x, cylinderHeight(), -p.y);
+				}
 			}
 		}
 
@@ -263,18 +361,8 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			final ArrowEditorJosmImp ae = new NewArrowEditorJosmImp();
 			Point3d point = new Point3d();
 			point.set(point3D.x, this.scale.y + minHeight, point3D.z);
-			ae.setPoint(new Point3d(point3D.x, minHeight, point3D.z));
+			ae.setPoint(new Point3d(point3D.x, minHeight + 2, point3D.z));
 			ae.setVector(new Vector3d(0, 1, 0));
-//			Map<String, String> a = node.getKeys();
-//			Collection<String> cylinderHeight = null;
-//			double d = cylinderHeight();
-//			if (a.containsKey("height")){
-//				cylinderHeight = a.values();
-//				String s = cylinderHeight.toString();
-//				int i = s.indexOf(",");
-//				String str = s.substring(1, i);
-//				d = Double.valueOf(str);
-//			}
 			// plus 2 for visualisation all the arrow
 			ae.setLength(cylinderHeight() + 2);
 			ae.setFildName("height");
@@ -282,8 +370,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			ae.setPrimitiveType(OsmPrimitiveType.NODE);
 
 			return Arrays.<Selection> asList(new MyBuildingSelection(wayId,
-					point, bounds.getMin(), bounds.getMax(), bounds.getRadius(),
-					minHeight, scale, ae));
+					point, bounds.getRadius(), ae));
 
 		}
 		return Collections.emptyList();
@@ -293,14 +380,12 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 		private ArrowEditorJosmImp ae;
 
-		public MyBuildingSelection(long wayId, Point3d center, Point3d boundMin, Point3d boundMax, double radius,
-				double minHeight,Vector3d scale) {
-			super(wayId, center, boundMin, boundMax, radius, minHeight, scale);
+		public MyBuildingSelection(long wayId, Point3d center, double radius) {
+			super(wayId, center, radius);
 		}
 
-		public MyBuildingSelection(long wayId, Point3d center, Point3d boundMin, Point3d boundMax, double radius, 
-				double minHeight, Vector3d scale, ArrowEditorJosmImp ae) {
-			this(wayId, center, boundMin, boundMax, radius, minHeight, scale);
+		public MyBuildingSelection(long wayId, Point3d center, double radius, ArrowEditorJosmImp ae) {
+			this(wayId, center, radius);
 			this.ae = ae;
 		}
 
@@ -338,9 +423,9 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 	}
 
-	private void setupScale(Model model2, double maxHeight, double minHeight) {
-
-		double height = maxHeight - minHeight;
+	private Vector3d setupScale(Model model2, double maxHeight, double minHeight) {
+		Vector3d vec;
+		double height = maxHeight /*- minHeight*/;
 
 		Bounds bounds = model2.getBounds();
 
@@ -352,8 +437,9 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 		this.scale.x = modelScaleWidht;
 		this.scale.y = modelScaleHeight;
-		this.scale.z = modelScaleHeight;
-
+		this.scale.z = modelScaleWidht;
+		vec = this.scale;
+		return vec;
 	}
 
 
@@ -380,7 +466,8 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 	 * 
 	 * @return model
 	 */
-	public static Model findSimpleModel(String type, LOD pLod, MetadataCacheService metadataCacheService, ModelCacheService modelCacheService) {
+	public static Model findSimpleModel(String type, LOD pLod, MetadataCacheService metadataCacheService, 
+			ModelCacheService modelCacheService) {
 
 		String model = null;
 
@@ -410,8 +497,8 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		for (int i = 0; i < pModel.getNumberOfMaterials(); i++) {
 			Material material = pModel.getMaterial(i);
 
-			material.setAmbientDiffuse(new AmbientDiffuseComponent(material.getAmbientDiffuse().getDiffuseColor(), material
-					.getAmbientDiffuse().getDiffuseColor()));
+			material.setAmbientDiffuse(new AmbientDiffuseComponent(material.getAmbientDiffuse().getDiffuseColor(), 
+					material.getAmbientDiffuse().getDiffuseColor()));
 		}
 	}
 
@@ -451,12 +538,15 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 			gl.glPushMatrix();
 			gl.glTranslated(this.getGlobalX(), minHeight, -this.getGlobalY());
-
 			gl.glEnable(GLLightingFunc.GL_NORMALIZE);
-//			gl.glRotated(angle, this.scale.x, this.scale.y, this.scale.z);
-			gl.glScaled(this.scale.x, this.scale.y, this.scale.z);
-			this.modelRender.render(gl, model2);
 
+			gl.glScaled(this.scale.x, this.scale.y, this.scale.z);
+
+			if (this.angle != 0){
+				gl.glRotated(angle, this.scale.x, this.scale.y , this.scale.z);
+			}
+
+			this.modelRender.render(gl, model2);
 			if (this.selected){
 
 				gl.glColor3fv(Color.RED.darker().getRGBComponents(new float[4]), 0);
@@ -472,7 +562,6 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			// rotate in the opposite direction to the camera
 
 			gl.glPopMatrix();
-
 		}
 	}
 

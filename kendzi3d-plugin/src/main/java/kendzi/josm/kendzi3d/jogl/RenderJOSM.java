@@ -574,14 +574,12 @@ public class RenderJOSM implements DataSetListenerAdapter.Listener{
 
 					//move debug sphere where is the object
 					gl.glTranslated(dx, dy, dz);
-					//					gl.glScaled(/*s.getScale().x*/1, s.getScale().y,1);
-					//					gl.glScaled(s.getScale().x, 1, s.getScale().z);
-					DrawUtil.drawDotOuterY(gl, s.getRadius(), 3004);
+					DrawUtil.drawDotOuterY(gl, s.getRadius(), 24);
 					gl.glRotated(90d, 1d, 0, 0);
-					DrawUtil.drawDotOuterY(gl, s.getRadius(), 3004);
+					DrawUtil.drawDotOuterY(gl, s.getRadius(), 24);
 
 					gl.glRotated(90d, 0, 0, 1d);
-					DrawUtil.drawDotOuterY(gl, s.getRadius(), 3004);
+					DrawUtil.drawDotOuterY(gl, s.getRadius(), 24);
 
 					gl.glPopMatrix();
 				}

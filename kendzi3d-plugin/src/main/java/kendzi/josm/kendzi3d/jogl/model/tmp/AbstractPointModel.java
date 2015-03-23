@@ -27,7 +27,6 @@ public abstract class AbstractPointModel extends AbstractModel {
     public AbstractPointModel(Node node, Perspective perspective) {
         super(perspective);
 
-        //point3D = null;
         Point2d point = perspective.calcPoint(node);
 
         setPoint(new Point3d(point.x, 0, -point.y));

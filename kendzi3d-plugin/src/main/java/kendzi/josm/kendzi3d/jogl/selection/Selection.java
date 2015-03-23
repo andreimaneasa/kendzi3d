@@ -19,13 +19,8 @@ import kendzi.josm.kendzi3d.jogl.selection.editor.Editor;
 
 public interface Selection {
 	Point3d getCenter();
-	Point3d getBoundMin();
-	Point3d getBoundMax();
 	double getRadius();
 	long getWayId();
-    double getMinHeight();
-    Vector3d getScale();
-	
 	void select(boolean selected);
 
 	List<Editor> getEditors();
