@@ -30,11 +30,9 @@ import kendzi.josm.kendzi3d.jogl.model.DrawableModel;
 import kendzi.josm.kendzi3d.jogl.model.Perspective3D;
 import kendzi.josm.kendzi3d.jogl.model.lod.DLODSuport;
 import kendzi.josm.kendzi3d.jogl.model.lod.LOD;
-import kendzi.josm.kendzi3d.jogl.model.shape.Cylinder;
 import kendzi.josm.kendzi3d.jogl.selection.Selectable;
 import kendzi.josm.kendzi3d.jogl.selection.Selection;
 import kendzi.josm.kendzi3d.service.MetadataCacheService;
-import kendzi.kendzi3d.josm.model.perspective.Perspective;
 import kendzi.kendzi3d.world.WorldObject;
 import kendzi.kendzi3d.world.quad.ModelLayerBuilder;
 import kendzi.kendzi3d.world.quad.layer.Layer;
@@ -60,7 +58,6 @@ import org.openstreetmap.josm.data.projection.Projection;
 import com.google.inject.Inject;
 
 public class RenderJOSM implements DataSetListenerAdapter.Listener{
-
 
 	/**
 	 * Model renderer.
@@ -102,8 +99,6 @@ public class RenderJOSM implements DataSetListenerAdapter.Listener{
 	 * local, drawable world.
 	 */
 	private Perspective3D perspective;
-
-	private Perspective perspectivePoint2d;
 
 	/**
 	 * Model displayed when error happen.

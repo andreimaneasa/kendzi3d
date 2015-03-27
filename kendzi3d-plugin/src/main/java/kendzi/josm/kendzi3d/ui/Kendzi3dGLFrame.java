@@ -1,5 +1,7 @@
 package kendzi.josm.kendzi3d.ui;
 
+import static org.openstreetmap.josm.tools.I18n.tr;
+
 import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.Container;
@@ -50,20 +52,26 @@ import kendzi.jogl.camera.CameraMoveListener;
 import kendzi.jogl.camera.SimpleMoveAnimator;
 import kendzi.jogl.model.render.ModelRender;
 import kendzi.jogl.texture.library.TextureLibraryStorageService;
+import kendzi.josm.kendzi3d.jogl.RenderJOSM;
 import kendzi.josm.kendzi3d.jogl.model.NewBuilding;
 import kendzi.josm.kendzi3d.jogl.model.building.model.roof.RoofOrientation;
+import kendzi.josm.kendzi3d.jogl.model.shape.Cylinder;
+import kendzi.josm.kendzi3d.jogl.model.shape.SphereIco;
 import kendzi.josm.kendzi3d.jogl.photos.PhotoParmPanel;
 import kendzi.josm.kendzi3d.jogl.selection.Selection;
 import kendzi.josm.kendzi3d.jogl.selection.TransferableRoof;
 import kendzi.josm.kendzi3d.service.MetadataCacheService;
+import kendzi.josm.kendzi3d.service.ModelCacheService;
 import kendzi.josm.kendzi3d.ui.fps.FpsChangeEvent;
 import kendzi.josm.kendzi3d.ui.fps.FpsListener;
 import kendzi.kendzi3d.josm.model.perspective.Perspective;
 
 import org.apache.log4j.Logger;
 import org.openstreetmap.josm.Main;
+import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.tools.I18n;
@@ -115,17 +123,24 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 	 */
 	@Inject
 	private ModelRender modelRenderInject;
-	/**
-	 * Metadata cache service.
-	 */
+
 	/**
 	 * Texture library service.
 	 */
 	@Inject
 	private TextureLibraryStorageService textureLibraryStorageService;
 
+	/**
+	 * Metadata cache service.
+	 */
 	@Inject
 	private MetadataCacheService metadataCacheService;
+
+	/**
+	 * Model cache service
+	 */
+	@Inject
+	private ModelCacheService modelCacheService;
 
 	private Perspective perspectivePoint2d;
 
@@ -292,7 +307,13 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 				selection = getLastSelection();
 				if (selection != null){
 
-					selVal = getOsmPrimitveFromSelectedBuilding(selection);
+					if (selection instanceof SphereIco.MyBuildingSelection){
+						selVal = getOsmPrimitveFromSelectedShape(selection);
+					}
+					else if (selection instanceof NewBuilding.MyBuildingSelection)
+					{
+						selVal = getOsmPrimitveFromSelectedBuilding(selection);
+					}
 
 					// start Plugin
 					AddAction add = new AddAction(selVal);
@@ -376,19 +397,19 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 
 		jpanel.setPreferredSize(new Dimension(250, 512)); 
 		jpanel.add(scroll);
-		
+
 		JPanel panelInterface = new JPanel();
 		panelInterface.setPreferredSize(new Dimension(180,512));
-		
+
 		panelInterface.add(buttonColorWall); 
 		panelInterface.add(buttonColorRoof);
-		
+
 		panelInterface.add(spinner);
 		panelInterface.add(buttonChangeHeight);
 		roofDialogOrientation = new RoofDialogOrientation(panelInterface);
 		roofDialogOrientation.setupTypeCombo();
 		panelInterface.add(buttonChangeOrientation);
-		
+
 		jpanel.add(panelInterface);
 
 		this.jTFFps = new JTextField("Fps: unknown");
@@ -469,6 +490,42 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		return Main.main.getCurrentDataSet();
 	}
 
+	public class copyRenderOSM extends JosmAction{
+
+	    private static final long serialVersionUID = 1L;
+
+	    private RenderJOSM renderJosm;
+
+	    private Kendzi3dGLEventListener kendzi3dGLEventListener;
+
+		/**
+		 * Constructor.
+		 * @param renderJosm
+		 * @param kendzi3dGLEventListener
+		 */
+		@Inject
+		public copyRenderOSM(RenderJOSM renderJosm, Kendzi3dGLEventListener kendzi3dGLEventListener) {
+			super(
+					tr("Move camera"),
+					"1306318146_build__24",
+					tr("Move camera"),
+					null,
+					false
+					);
+			
+			this.renderJosm = renderJosm;
+			this.kendzi3dGLEventListener = kendzi3dGLEventListener;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+		}
+		
+		public void getPerspective2D(){ 		
+			this.kendzi3dGLEventListener.getCamera();
+		}
+	}
+
 	public Collection<OsmPrimitive> getOsmPrimitveFromSelectedBuilding(Selection selection) {
 
 		boolean cond = false;
@@ -509,6 +566,51 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 			}
 		} catch (NullPointerException e) {
 			log.info("NullPointerException from getOsmPrimitveFromSelectedBuilding() " + e);
+		}
+		sel = null;
+		return selVal;
+	}
+
+	public Collection<OsmPrimitive> getOsmPrimitveFromSelectedShape(Selection selection) {
+
+		boolean cond = false;
+
+		DataSet dataset = getDataSet();
+
+		SphereIco sphere;
+		Collection<OsmPrimitive> sel = new LinkedList<OsmPrimitive>();
+
+		Node nodes = null;
+		Collection<Node> dataSetNode = dataset.getNodes();
+		try {
+			for (Node node : dataSetNode) {
+				nodes = node;
+
+				if (selection instanceof SphereIco.MyBuildingSelection) {
+					SphereIco.MyBuildingSelection wo = (SphereIco.MyBuildingSelection) selection;
+					SphereIco newB = wo.getNewBuildingInstance();
+					
+					sphere = new SphereIco(nodes, newB.getPerspective(),
+							modelRenderInject, metadataCacheService, modelCacheService);
+					
+					if (sphere.getNode().getUniqueId() == newB.getNode()
+							.getUniqueId()) {
+						cond = true;
+					}
+
+					if (cond) {
+						OsmPrimitive osmPrimitive = (OsmPrimitive) newB
+								.getNode();
+						sel.add(osmPrimitive);
+					}
+
+					cond = false;
+				}
+
+				selVal = sel;
+			}
+		} catch (NullPointerException e) {
+			log.info("NullPointerException from getOsmPrimitveFromSelectedShape " + e);
 		}
 		sel = null;
 		return selVal;

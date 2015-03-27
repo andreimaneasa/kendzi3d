@@ -27,7 +27,6 @@ import kendzi.jogl.texture.dto.TextureData;
 import kendzi.jogl.texture.library.OsmBuildingElementsTextureMenager;
 import kendzi.jogl.texture.library.TextureFindCriteria;
 import kendzi.jogl.texture.library.TextureLibraryStorageService;
-import kendzi.josm.kendzi3d.jogl.layer.SphereLayer;
 import kendzi.josm.kendzi3d.jogl.model.building.model.BuildingModel;
 import kendzi.josm.kendzi3d.jogl.model.building.model.NodeBuildingPart;
 import kendzi.josm.kendzi3d.jogl.model.building.parser.BuildingParser;
@@ -49,20 +48,18 @@ import kendzi.kendzi3d.josm.model.perspective.Perspective;
 import kendzi.util.StringUtil;
 
 import org.apache.log4j.Logger;
-import org.ejml.ops.SpecializedOps;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
 
 /**
- * Cylinder for nodes.
+ * Ico Sphere for nodes.
  * 
  * @author Andrei Maneasa
  */
-public class Cylinder extends AbstractPointModel implements DLODSuport {
-
+public class SphereIco extends AbstractPointModel implements DLODSuport {
 	/** Log. */
-	private static final Logger log = Logger.getLogger(Cylinder.class);
+	private static final Logger log = Logger.getLogger(SphereIco.class);
 
 	/**
 	 * Renderer of model.
@@ -101,8 +98,6 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 	protected boolean preview;
 
-	private double angle = 0;
-
 	private Node node;
 
 	public Node getNode() {
@@ -114,6 +109,16 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 	}
 
 	private double scaleHeight;
+
+	private Perspective perspective;
+
+	public Perspective getPerspective() {
+		return perspective;
+	}
+
+	public void setPerspective(Perspective perspective) {
+		this.perspective = perspective;
+	}
 
 	/**
 	 * @param node
@@ -127,8 +132,8 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 	 * @param pModelCacheService
 	 *            model cache service
 	 */
-	public Cylinder(Node node, Perspective perspective, ModelRender pModelRender, 
-			MetadataCacheService pMetadataCacheService,ModelCacheService pModelCacheService) {
+	public SphereIco(Node node, Perspective perspective, ModelRender pModelRender, 
+			MetadataCacheService pMetadataCacheService, ModelCacheService pModelCacheService) {
 		super(node, perspective);
 
 		this.modelLod = new EnumMap<LOD, Model>(LOD.class);
@@ -140,6 +145,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		this.modelCacheService = pModelCacheService;
 
 		this.node = node;
+		this.perspective = perspective;
 	}
 
 	@Override
@@ -170,9 +176,6 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		boundModel = null;
 		boundModel = findSimpleModel(this.node, this.type, pLod, this.metadataCacheService, this.modelCacheService);
 
-		if(rotation()){
-			this.angle = angleValue();
-		}
 		Vector3d scaleVec = new Vector3d();
 
 		if (scale()){
@@ -181,8 +184,8 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		} 
 
 		if (height() && scale()){
-	
-			double height = cylinderHeight();
+
+			double height = sphereHeight();
 
 			Bounds bounds = boundModel.getBounds();
 
@@ -204,7 +207,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			}
 
 		}else if(height()){
-			setupHeight(boundModel, cylinderHeight());
+			setupHeight(boundModel, sphereHeight());
 		}
 
 		this.modelLod.put(pLod, boundModel);
@@ -212,43 +215,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 	/**
 	 * 
-	 * @return if cylinder contains angle
-	 */
-	private boolean rotation(){
-		Map<String, String> str = this.node.getKeys();
-		if (str.containsKey("angle")||str.containsKey("Angle")||str.containsKey("ANGLE")){
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * 
-	 * @return angle value 
-	 */
-	private double angleValue(){
-		double value = 0;
-		String val = null;
-		Map<String, String> str = this.node.getKeys();
-		if (str.containsKey("angle")||str.containsKey("Angle")||str.containsKey("ANGLE")){
-			String val1 = str.get("angle");
-			String val2 = str.get("Angle");
-			String val3 = str.get("ANGLE");
-			if(val1 != null){
-				val = val1;
-			}else if (val2 != null){
-				val = val2;
-			}else {
-				val = val3; 
-			}
-			value = Double.valueOf(val);
-		}
-		return value;
-	}
-
-	/**
-	 * 
-	 * @return if cylinder contains scale
+	 * @return if sphere contains scale
 	 */
 	private boolean scale(){
 		Map<String, String> str = this.node.getKeys();
@@ -279,12 +246,15 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			}
 			value = Double.valueOf(val);
 		}
+		if (value == 0){
+			value = getScale(this.node, this.type, this.metadataCacheService);
+		}
 		return value;
 	}
 
 	/**
 	 * 
-	 * @return if cylinder contains height
+	 * @return if sphere contains height
 	 */
 	private boolean height(){
 		Map<String, String> str = this.node.getKeys();
@@ -322,10 +292,10 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		public void preview(double newValue) {
 			log.info("preview: " + newValue);
 
-			Cylinder.this.preview = true;
-			Cylinder.this.buildModel = false;
+			SphereIco.this.preview = true;
+			SphereIco.this.buildModel = false;
 
-			log.info("preview: " + Cylinder.this.preview + " buildModel: " + Cylinder.this.buildModel);
+			log.info("preview: " + SphereIco.this.preview + " buildModel: " + SphereIco.this.buildModel);
 
 		}
 	}
@@ -334,9 +304,9 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 	 * test parameter "height" from JOSM 
 	 * if it's null get default height from
 	 *  kendzi-plugin metadata.proprieties
-	 * @return height of Cylinder
+	 * @return height of Sphere
 	 */
-	private double cylinderHeight(){
+	private double sphereHeight(){
 
 		Double maxHeight = getMaxHeight(this.node, this.type, this.metadataCacheService);
 
@@ -357,11 +327,11 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 				Point2d p = np.getPoint();
 				if (this.minHeight != 0){
 					bf.addPoint(p.x, this.minHeight, -p.y); 
-					bf.addPoint(p.x, cylinderHeight(), -p.y); 
+					bf.addPoint(p.x, scaleValue(), -p.y); 
 					bf.addPoint(bnd.min.x, bnd.min.y, -bnd.min.z);
 				}else{
 					bf.addPoint(p.x, this.minHeight, -p.y); 
-					bf.addPoint(p.x, cylinderHeight(), -p.y);
+					bf.addPoint(p.x, scaleValue(), -p.y);
 				}
 			}
 		}
@@ -373,12 +343,12 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		if (this.node != null) {
 			final ArrowEditorJosmImp ae = new NewArrowEditorJosmImp();
 			Point3d point = new Point3d();
-			point.set(point3D.x, this.scale.y + minHeight, point3D.z);
+			point.set(point3D.x , this.scale.y + minHeight, point3D.z);
 			ae.setPoint(new Point3d(point3D.x, minHeight + 2, point3D.z));
 			ae.setVector(new Vector3d(0, 1, 0));
 			// plus a constant for visualisation all the arrow
-			ae.setLength(cylinderHeight() + 2);
-			ae.setFildName("height");
+			ae.setLength(scaleValue() + 2);
+			ae.setFildName("scale");
 			ae.setPrimitiveId(this.node.getUniqueId());
 			ae.setPrimitiveType(OsmPrimitiveType.NODE);
 
@@ -404,7 +374,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 		@Override
 		public void select(boolean selected) {
-			Cylinder.this.selected = selected;
+			SphereIco.this.selected = selected;
 		}
 
 		@Override
@@ -412,8 +382,8 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			return Arrays.<Editor> asList(ae);
 		}
 
-		public Cylinder getNewBuildingInstance() {
-			return Cylinder.this;
+		public SphereIco getNewBuildingInstance() {
+			return SphereIco.this;
 		}
 	}
 
@@ -466,12 +436,11 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		return ModelUtil.getHeight(node, null);
 	}
 
-
 	/**
-	 * Finds simple model for cylinder. Finding type
+	 * Finds simple model for sphere. Finding type
 	 * 
 	 * @param type
-	 *            cylinder type
+	 *            sphere type
 	 * @param pLod
 	 *            lod level
 	 * @param metadataCacheService
@@ -484,7 +453,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 		String model = null;
 
-		String typeModel = metadataCacheService.getPropertites("cylinder.type.unknown.{1}.model",null, null, "" + pLod);
+		String typeModel = metadataCacheService.getPropertites("sphere.type.unknown.{1}.model",null, null, "" + pLod);
 
 		if (typeModel != null) {
 			model = typeModel;
@@ -505,13 +474,14 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 		return null;
 	}
+
 	/**
 	 * Gets object color.
 	 * 
 	 * @param primitive Osm 
 	 * @return color 
 	 */
-	public static Color parseCylinderColor(OsmPrimitive primitive) {
+	public static Color parseSphereColor(OsmPrimitive primitive) {
 
 		String typeColor = OsmAttributeKeys.COLOR.primitiveValue(primitive);
 		if (StringUtil.isBlankOrNull(typeColor)) {
@@ -523,9 +493,9 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		}
 		return null;
 	}
-	
+
 	/**
-	 * set color for cylinder
+	 * set color for sphere
 	 * @param pModel
 	 * @param node
 	 */
@@ -533,7 +503,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		for (int i = 0; i < pModel.getNumberOfMaterials(); i++) {
 			Material material = pModel.getMaterial(i);
 
-			Color color = parseCylinderColor((OsmPrimitive) node);
+			Color color = parseSphereColor((OsmPrimitive) node);
 			if (color != null){
 				// get color from Node attibute
 				// 40% color intensity 
@@ -547,7 +517,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 	}
 
 	/**
-	 * Finds height for cylinder. Order of finding is: - node type
+	 * Finds height for sphere. Order of finding is: - node type
 	 * 
 	 * @param node
 	 * @param type
@@ -555,13 +525,16 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 	 * 
 	 * @return height
 	 */
+	/*
+	 * but for sphere, now isn't set a default value in metadata.proprieties
+	 */
 	public static double getHeight(OsmPrimitive node, String type, MetadataCacheService metadataCacheService) {
 
 		Double height = 1d;
 
 		Double nodeHeight = ModelUtil.getObjHeight(node, null);
 
-		Double typeHeight = metadataCacheService.getPropertitesDouble("cylinder.type.height", null, type);
+		Double typeHeight = metadataCacheService.getPropertitesDouble("sphere.type.height", null, type);
 
 		if (nodeHeight != null) {
 			height = nodeHeight;
@@ -571,7 +544,32 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 
 		return height;
 	}
+	
+	/**
+	 * Finds scale for sphere. Order of finding is: - node type
+	 * 
+	 * @param node
+	 * @param type
+	 * @param metadataCacheService
+	 * 
+	 * @return scale
+	 */
+	public static double getScale(OsmPrimitive node, String type, MetadataCacheService metadataCacheService) {
 
+		Double scale = 1d;
+
+		Double nodeScale = ModelUtil.getObjHeight(node, null);
+
+		Double typeHeight = metadataCacheService.getPropertitesDouble("sphere.type.scale", null, type);
+
+		if (nodeScale != null) {
+			scale = nodeScale;
+		} else if (typeHeight != null) {
+			scale = typeHeight;
+		} 
+
+		return scale;
+	}
 
 	@Override
 	public void draw(GL2 gl, Camera camera, LOD pLod) {
@@ -585,10 +583,6 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			gl.glEnable(GLLightingFunc.GL_NORMALIZE);
 
 			gl.glScaled(this.scale.x, this.scale.y, this.scale.z);
-
-			if (this.angle != 0){
-				gl.glRotated(angle, this.scale.x, this.scale.y , this.scale.z);
-			}
 
 			this.modelRender.render(gl, model2);
 			if (this.selected){

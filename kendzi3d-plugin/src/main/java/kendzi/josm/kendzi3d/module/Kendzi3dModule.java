@@ -15,6 +15,7 @@ import kendzi.josm.kendzi3d.jogl.layer.FenceLayer;
 import kendzi.josm.kendzi3d.jogl.layer.NewBuildingLayer;
 import kendzi.josm.kendzi3d.jogl.layer.RoadLayer;
 import kendzi.josm.kendzi3d.jogl.layer.ShapeLayer;
+import kendzi.josm.kendzi3d.jogl.layer.SphereLayer;
 import kendzi.josm.kendzi3d.jogl.layer.TestWallLayer;
 import kendzi.josm.kendzi3d.jogl.layer.TreeLayer;
 import kendzi.josm.kendzi3d.jogl.layer.WallLayer;
@@ -88,6 +89,7 @@ public class Kendzi3dModule extends AbstractModule {
         bind(FenceLayer.class);
         bind(TestWallLayer.class);
         bind(ShapeLayer.class);
+        bind(SphereLayer.class);
         
 
         bind(PhotoRenderer.class);
@@ -152,7 +154,7 @@ public class Kendzi3dModule extends AbstractModule {
     @Singleton
     RenderJOSM provideRenderJOSM(ModelRender pModelRender, ModelsLibraryLayer pointModelsLayer, NewBuildingLayer buildingLayer,
             RoadLayer roadLayer, WaterLayer waterLayer, TreeLayer treeLayer, FenceLayer fenceLayer, WallLayer wallLayer,
-            TestWallLayer testWallLayer,ShapeLayer shapeLayer) {
+            TestWallLayer testWallLayer,ShapeLayer shapeLayer, SphereLayer sphereLayer) {
 
         List<Layer> layerList = new ArrayList<Layer>();
         layerList.add(buildingLayer);
@@ -164,6 +166,7 @@ public class Kendzi3dModule extends AbstractModule {
         layerList.add(wallLayer);
         layerList.add(testWallLayer);
         layerList.add(shapeLayer);
+        layerList.add(sphereLayer);
         
 
         RenderJOSM renderJOSM = new RenderJOSM();
