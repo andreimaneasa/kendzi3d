@@ -18,6 +18,15 @@ import javax.vecmath.Point3d;
  */
 public class Bounds {
     /**
+     * Radius nr 1 of bounds.
+     */
+    public double radius1;
+    /**
+     * Radius nr 2 of bounds.
+     */
+    public double radius2;
+	
+	/**
      * Minimal point of bounds.
      */
     public Point3d min;

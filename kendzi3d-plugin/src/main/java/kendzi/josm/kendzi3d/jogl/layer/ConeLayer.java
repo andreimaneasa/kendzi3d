@@ -1,8 +1,7 @@
 package kendzi.josm.kendzi3d.jogl.layer;
 
 import kendzi.jogl.model.render.ModelRender;
-import kendzi.jogl.texture.library.TextureLibraryStorageService;
-import kendzi.josm.kendzi3d.jogl.model.shape.Cylinder;
+import kendzi.josm.kendzi3d.jogl.model.shape.Cone;
 import kendzi.josm.kendzi3d.service.MetadataCacheService;
 import kendzi.josm.kendzi3d.service.ModelCacheService;
 import kendzi.kendzi3d.josm.model.perspective.Perspective;
@@ -19,7 +18,7 @@ import org.openstreetmap.josm.data.osm.Way;
 
 import com.google.inject.Inject;
 
-public class ShapeLayer implements Layer{
+public class ConeLayer implements Layer{
 	/** Log. */
 	@SuppressWarnings("unused")
 	private static final Logger log = Logger.getLogger(ShapeLayer.class);
@@ -42,26 +41,20 @@ public class ShapeLayer implements Layer{
 	@Inject
 	private MetadataCacheService metadataCacheService;
 
-	/**
-	 * Texture library service.
-	 */
-	@Inject
-	private TextureLibraryStorageService textureLibraryStorageService;
-
-	private Match cylinderMatcher;
+	private Match coneMatcher;
 
 	{
 		try {
-			this.cylinderMatcher = SearchCompiler.compile("(shape=cylinder)", false, false);
+			this.coneMatcher = SearchCompiler.compile("(shape=cone)", false, false);
 		} catch (ParseError e) {
-			this.cylinderMatcher = new SearchCompiler.Never();
+			this.coneMatcher = new SearchCompiler.Never();
 			e.printStackTrace();
 		}
 	}
 
 	@Override
 	public Match getNodeMatcher() {
-		return this.cylinderMatcher;
+		return this.coneMatcher;
 	}
 
 	@Override
@@ -81,8 +74,7 @@ public class ShapeLayer implements Layer{
 
 	@Override
 	public WorldObject buildModel(Node pNode, Perspective perspective) {
-		return new Cylinder(pNode, perspective, this.modelRender, this.metadataCacheService,
-				this.modelCacheService, this.textureLibraryStorageService);
+		return new Cone(pNode, perspective, this.modelRender, this.metadataCacheService, this.modelCacheService);
 
 	}
 

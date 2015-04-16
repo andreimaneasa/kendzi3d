@@ -62,4 +62,23 @@ public class BoundsFactory {
         return this.bounds;
 
     }
+    
+    public Bounds toBoundsTwoRadius() {
+
+        this.bounds.center = new Point3d(
+                (this.bounds.max.x + this.bounds.min.x) / 2d,
+                (this.bounds.max.y + this.bounds.min.y) / 2d,
+                (this.bounds.max.z + this.bounds.min.z) / 2d);
+
+        double dxMax = this.bounds.max.x;
+        double dxMim = this.bounds.min.x;
+        double dy = this.bounds.max.y - this.bounds.min.y;
+        double dz = this.bounds.max.z - this.bounds.min.z;
+        this.bounds.radius1 = 0.5d * Math.sqrt(dxMax * dxMax + dy * dy + dz * dz);
+        this.bounds.radius2 = 0.5d * Math.sqrt(dxMim * dxMim + dy * dy + dz * dz);
+
+        return this.bounds;
+
+    }
+    
 }

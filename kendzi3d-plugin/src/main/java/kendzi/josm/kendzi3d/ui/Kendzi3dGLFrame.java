@@ -23,6 +23,10 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -35,7 +39,6 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -55,6 +58,7 @@ import kendzi.jogl.texture.library.TextureLibraryStorageService;
 import kendzi.josm.kendzi3d.jogl.RenderJOSM;
 import kendzi.josm.kendzi3d.jogl.model.NewBuilding;
 import kendzi.josm.kendzi3d.jogl.model.building.model.roof.RoofOrientation;
+import kendzi.josm.kendzi3d.jogl.model.shape.Cone;
 import kendzi.josm.kendzi3d.jogl.model.shape.Cylinder;
 import kendzi.josm.kendzi3d.jogl.model.shape.SphereIco;
 import kendzi.josm.kendzi3d.jogl.photos.PhotoParmPanel;
@@ -99,6 +103,7 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 	JButton buttonColorRoof;
 	JButton buttonChangeHeight;
 	JButton buttonChangeOrientation;
+	JButton buttonColorShape;
 
 	SpinnerModel model = new SpinnerNumberModel(2.5, 0.1, 20, 0.1);     
 	JSpinner spinner = new JSpinner(model);
@@ -291,6 +296,7 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 
 
 		buttonColorWall = new JButton("Color Wall");
+		buttonColorShape = new JButton("Color Shape");
 		buttonColorRoof = new JButton("Color Roof");
 		buttonChangeHeight = new JButton("Height");
 		buttonChangeOrientation = new JButton("Orientation");
@@ -299,26 +305,22 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		// keyboard shortcut ALT + V
 		buttonColorRoof.setMnemonic(KeyEvent.VK_R); //push button Color
 		// keyboard shortcut ALT + R
+		buttonColorShape.setMnemonic(KeyEvent.VK_S); //push button Color
+		// keyboard shortcut ALT + S
+
 
 		buttonColorWall.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-
 				selection = getLastSelection();
 				if (selection != null){
-
-					if (selection instanceof SphereIco.MyBuildingSelection){
-						selVal = getOsmPrimitveFromSelectedShape(selection);
-					}
-					else if (selection instanceof NewBuilding.MyBuildingSelection)
+					if (selection instanceof NewBuilding.MyBuildingSelection)
 					{
 						selVal = getOsmPrimitveFromSelectedBuilding(selection);
+						// start Plugin
+						AddAction add = new AddAction(selVal);
+						add.startPluginForColorWall();
 					}
-
-					// start Plugin
-					AddAction add = new AddAction(selVal);
-					add.startPluginForColorWall();
-
 				}else{
 					JOptionPane.showMessageDialog(null, I18n.tr("Please select one building", new Object[0]), "Error", 0);
 				}
@@ -330,13 +332,14 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 			public void actionPerformed(ActionEvent e) {
 				selection = getLastSelection();
 				if (selection != null){
+					if (selection instanceof NewBuilding.MyBuildingSelection)
+					{
+						selVal = getOsmPrimitveFromSelectedBuilding(selection);
 
-					selVal = getOsmPrimitveFromSelectedBuilding(selection);
-
-					// start Plugin
-					AddAction add = new AddAction(selVal);
-					add.startPluginForColorRoof();
-
+						// start Plugin
+						AddAction add = new AddAction(selVal);
+						add.startPluginForColorRoof();
+					}
 				}else{
 					JOptionPane.showMessageDialog(null, I18n.tr("Please select one building", new Object[0]), "Error", 0);
 				}
@@ -349,24 +352,24 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 				selection = getLastSelection();
 
 				if (selection != null){
+					if (selection instanceof NewBuilding.MyBuildingSelection)
+					{
+						selVal = getOsmPrimitveFromSelectedBuilding(selection);
 
-					selVal = getOsmPrimitveFromSelectedBuilding(selection);
+						String height;
 
-					String height;
+						Double d = (Double) spinner.getValue();
 
-					Double d = (Double) spinner.getValue();
+						String input  = String.valueOf(d);
+						int value = input.indexOf(".");
 
-					String input  = String.valueOf(d);
-					int value = input.indexOf(".");
+						height = input.substring(0, value+2);
 
-					height = input.substring(0, value+2);
-
-					Main.main.undoRedo.add(new ChangePropertyCommand(selVal, "roof:type:height",height));
-
+						Main.main.undoRedo.add(new ChangePropertyCommand(selVal, "roof:type:height",height));
+					}
 				}else{
 					JOptionPane.showMessageDialog(null, I18n.tr("Please select one building", new Object[0]), "Error", 0);
 				}
-
 			}
 		});
 
@@ -376,12 +379,19 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 				selection = getLastSelection();
 
 				if (selection != null){
+					if (selection instanceof NewBuilding.MyBuildingSelection)
+					{
+						selVal = getOsmPrimitveFromSelectedBuilding(selection);
 
-					selVal = getOsmPrimitveFromSelectedBuilding(selection);
+						String input = roofDialogOrientation.getNameFromComboBox(); 
 
-					String input = roofDialogOrientation.getNameFromComboBox(); 
-
-					Main.main.undoRedo.add(new ChangePropertyCommand(selVal, "roof:orientation",getNameOrientation(input)));
+						Main.main.undoRedo.add(new ChangePropertyCommand(selVal, "roof:orientation",getNameOrientation(input)));
+					}
+					if (selection instanceof Cylinder.MyBuildingSelection)
+					{
+						String input = roofDialogOrientation.getNameFromComboBox(); 
+						Cylinder.setOrientation(input);
+					}
 
 				}else{
 					JOptionPane.showMessageDialog(null, I18n.tr("Please select one building", new Object[0]), "Error", 0);
@@ -389,6 +399,28 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 			}
 		});
 
+		buttonColorShape.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				selection = getLastSelection();
+				if (selection != null){
+					if (selection instanceof SphereIco.MyBuildingSelection || selection instanceof Cylinder.MyBuildingSelection 
+							||selection instanceof Cone.MyBuildingSelection){
+						try {
+							selVal = getOsmPrimitveFromSelectedShape(selection);
+
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+						// start Plugin
+						AddAction add = new AddAction(selVal);
+						add.startPluginForColorWall();
+					}
+				}else{
+					JOptionPane.showMessageDialog(null, I18n.tr("Please select one building", new Object[0]), "Error", 0);
+				}
+			}
+		});
 
 		JSpinner.NumberEditor editor = new JSpinner.NumberEditor(spinner,"#.#");
 		editor.getFormat().setGroupingUsed(false);
@@ -409,6 +441,7 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		roofDialogOrientation = new RoofDialogOrientation(panelInterface);
 		roofDialogOrientation.setupTypeCombo();
 		panelInterface.add(buttonChangeOrientation);
+		panelInterface.add(buttonColorShape);
 
 		jpanel.add(panelInterface);
 
@@ -492,11 +525,11 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 
 	public class copyRenderOSM extends JosmAction{
 
-	    private static final long serialVersionUID = 1L;
+		private static final long serialVersionUID = 1L;
 
-	    private RenderJOSM renderJosm;
+		private RenderJOSM renderJosm;
 
-	    private Kendzi3dGLEventListener kendzi3dGLEventListener;
+		private Kendzi3dGLEventListener kendzi3dGLEventListener;
 
 		/**
 		 * Constructor.
@@ -512,7 +545,7 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 					null,
 					false
 					);
-			
+
 			this.renderJosm = renderJosm;
 			this.kendzi3dGLEventListener = kendzi3dGLEventListener;
 		}
@@ -520,7 +553,7 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		@Override
 		public void actionPerformed(ActionEvent e) {
 		}
-		
+
 		public void getPerspective2D(){ 		
 			this.kendzi3dGLEventListener.getCamera();
 		}
@@ -571,29 +604,109 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		return selVal;
 	}
 
-	public Collection<OsmPrimitive> getOsmPrimitveFromSelectedShape(Selection selection) {
+	public Collection<OsmPrimitive> getOsmPrimitveFromSelectedShape(Selection selection) throws IOException {
 
 		boolean cond = false;
 
 		DataSet dataset = getDataSet();
 
 		SphereIco sphere;
+		Cylinder cylinder;
+		Cone cone;
 		Collection<OsmPrimitive> sel = new LinkedList<OsmPrimitive>();
 
 		Node nodes = null;
 		Collection<Node> dataSetNode = dataset.getNodes();
-		try {
+
+		//				try {
+		//					File file = new File("C:\\Users\\anma8806\\Desktop\\New Text Document.txt");
+		//		
+		//					if (!file.exists()) {
+		//						file.createNewFile();
+		//					}
+		//		
+		//					FileWriter fw = new FileWriter(file.getAbsoluteFile());
+		//					BufferedWriter bw = new BufferedWriter(fw);
+		//					String a = dataSetNode.toString();
+		//					bw.write(a);
+		//					bw.close();	
+		//				} catch (NullPointerException e) {
+		//					System.out.println(" Error from new TExt _________________________________________" );
+		//				}
+
+		try{
+
 			for (Node node : dataSetNode) {
 				nodes = node;
+
+				//				Map<String, String> str = nodes.getKeys();
+				//				if (str.containsValue("cylinder")){
+				//					System.out.println("BLANAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+				//				}	
 
 				if (selection instanceof SphereIco.MyBuildingSelection) {
 					SphereIco.MyBuildingSelection wo = (SphereIco.MyBuildingSelection) selection;
 					SphereIco newB = wo.getNewBuildingInstance();
-					
+
 					sphere = new SphereIco(nodes, newB.getPerspective(),
 							modelRenderInject, metadataCacheService, modelCacheService);
-					
+
 					if (sphere.getNode().getUniqueId() == newB.getNode()
+							.getUniqueId()) {
+						cond = true;
+					}
+
+					if (cond) {
+						OsmPrimitive osmPrimitive = (OsmPrimitive) newB
+								.getNode();
+						sel.add(osmPrimitive);
+					}
+
+					cond = false;
+				}
+
+				if (selection instanceof Cylinder.MyBuildingSelection) {
+
+					Cylinder.MyBuildingSelection wo = (Cylinder.MyBuildingSelection) selection;
+					Cylinder newB = wo.getNewBuildingInstance();
+
+					cylinder = new Cylinder(nodes, newB.getPerspective(),
+							modelRenderInject, metadataCacheService, modelCacheService, textureLibraryStorageService);
+
+					//					File file = new File("C:\\Users\\anma8806\\Desktop\\cilinder.txt");
+					//
+					//					if (!file.exists()) {
+					//						file.createNewFile();
+					//					}
+					//
+					//					FileWriter fw = new FileWriter(file.getAbsoluteFile());
+					//					BufferedWriter bw = new BufferedWriter(fw);
+					//					String a = cylinder.getNode().toString();
+					//					String b = newB.getNode().toString();
+					//
+					//					bw.write(a + "bla " + b);
+					//					bw.close();	
+
+					if (cylinder.getNode().getUniqueId() == newB.getNode().getUniqueId()) {
+						cond = true;
+					}
+
+					if (cond) {
+						OsmPrimitive osmPrimitive = (OsmPrimitive) newB.getNode();
+						sel.add(osmPrimitive);
+					}
+
+					cond = false;
+				}
+
+				if (selection instanceof Cone.MyBuildingSelection) {
+					Cone.MyBuildingSelection wo = (Cone.MyBuildingSelection) selection;
+					Cone newB = wo.getNewBuildingInstance();
+
+					cone = new Cone(nodes, newB.getPerspective(),
+							modelRenderInject, metadataCacheService, modelCacheService);
+
+					if (cone.getNode().getUniqueId() == newB.getNode()
 							.getUniqueId()) {
 						cond = true;
 					}

@@ -11,6 +11,7 @@ import kendzi.jogl.texture.builder.ColorTextureBuilder;
 import kendzi.jogl.texture.library.TextureLibraryService;
 import kendzi.jogl.texture.library.TextureLibraryStorageService;
 import kendzi.josm.kendzi3d.jogl.RenderJOSM;
+import kendzi.josm.kendzi3d.jogl.layer.ConeLayer;
 import kendzi.josm.kendzi3d.jogl.layer.FenceLayer;
 import kendzi.josm.kendzi3d.jogl.layer.NewBuildingLayer;
 import kendzi.josm.kendzi3d.jogl.layer.RoadLayer;
@@ -90,7 +91,7 @@ public class Kendzi3dModule extends AbstractModule {
         bind(TestWallLayer.class);
         bind(ShapeLayer.class);
         bind(SphereLayer.class);
-        
+        bind(ConeLayer.class);
 
         bind(PhotoRenderer.class);
         bind(SkyBox.class);
@@ -154,7 +155,7 @@ public class Kendzi3dModule extends AbstractModule {
     @Singleton
     RenderJOSM provideRenderJOSM(ModelRender pModelRender, ModelsLibraryLayer pointModelsLayer, NewBuildingLayer buildingLayer,
             RoadLayer roadLayer, WaterLayer waterLayer, TreeLayer treeLayer, FenceLayer fenceLayer, WallLayer wallLayer,
-            TestWallLayer testWallLayer,ShapeLayer shapeLayer, SphereLayer sphereLayer) {
+            TestWallLayer testWallLayer,ShapeLayer shapeLayer, SphereLayer sphereLayer, ConeLayer coneLayer) {
 
         List<Layer> layerList = new ArrayList<Layer>();
         layerList.add(buildingLayer);
@@ -167,6 +168,7 @@ public class Kendzi3dModule extends AbstractModule {
         layerList.add(testWallLayer);
         layerList.add(shapeLayer);
         layerList.add(sphereLayer);
+        layerList.add(coneLayer);
         
 
         RenderJOSM renderJOSM = new RenderJOSM();
