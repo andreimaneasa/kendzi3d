@@ -23,9 +23,6 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -618,31 +615,10 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		Node nodes = null;
 		Collection<Node> dataSetNode = dataset.getNodes();
 
-		//				try {
-		//					File file = new File("C:\\Users\\anma8806\\Desktop\\New Text Document.txt");
-		//		
-		//					if (!file.exists()) {
-		//						file.createNewFile();
-		//					}
-		//		
-		//					FileWriter fw = new FileWriter(file.getAbsoluteFile());
-		//					BufferedWriter bw = new BufferedWriter(fw);
-		//					String a = dataSetNode.toString();
-		//					bw.write(a);
-		//					bw.close();	
-		//				} catch (NullPointerException e) {
-		//					System.out.println(" Error from new TExt _________________________________________" );
-		//				}
-
 		try{
 
 			for (Node node : dataSetNode) {
 				nodes = node;
-
-				//				Map<String, String> str = nodes.getKeys();
-				//				if (str.containsValue("cylinder")){
-				//					System.out.println("BLANAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-				//				}	
 
 				if (selection instanceof SphereIco.MyBuildingSelection) {
 					SphereIco.MyBuildingSelection wo = (SphereIco.MyBuildingSelection) selection;
@@ -672,20 +648,6 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 
 					cylinder = new Cylinder(nodes, newB.getPerspective(),
 							modelRenderInject, metadataCacheService, modelCacheService, textureLibraryStorageService);
-
-					//					File file = new File("C:\\Users\\anma8806\\Desktop\\cilinder.txt");
-					//
-					//					if (!file.exists()) {
-					//						file.createNewFile();
-					//					}
-					//
-					//					FileWriter fw = new FileWriter(file.getAbsoluteFile());
-					//					BufferedWriter bw = new BufferedWriter(fw);
-					//					String a = cylinder.getNode().toString();
-					//					String b = newB.getNode().toString();
-					//
-					//					bw.write(a + "bla " + b);
-					//					bw.close();	
 
 					if (cylinder.getNode().getUniqueId() == newB.getNode().getUniqueId()) {
 						cond = true;
