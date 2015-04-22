@@ -232,6 +232,7 @@ public class SphereIco extends AbstractPointModel implements DLODSuport {
 	private double scaleValue(){
 		double value = 0;
 		String val = null;
+		String scaleStr = null;
 		Map<String, String> str = this.node.getKeys();
 		if (str.containsKey("scale")||str.containsKey("Scale")||str.containsKey("SCALE")){
 			String val1 = str.get("scale");
@@ -244,16 +245,25 @@ public class SphereIco extends AbstractPointModel implements DLODSuport {
 			}else {
 				val = val3; 
 			}
-
+			scaleStr = val.trim().toLowerCase();
+			scaleStr = scaleStr.replaceAll(",", ".");
 		}
+
 		if (value == 0){
 			value = getScale(this.node, this.type, this.metadataCacheService);
 		}
-		if (val.contains(",")){
-			val = val.replace(",", ".");
+
+		try{
+			if(val==null){
+				return new Double(value);
+			}
+			else{
+				return new Double(scaleStr);
+			}
+		} catch (Exception e) {
+			log.info("Unsupportet height: " + scaleStr);
 		}
-		value = Double.valueOf(val);
-		
+
 		return value;
 	}
 

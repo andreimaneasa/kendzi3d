@@ -265,6 +265,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 	private double angleValue(){
 		double value = 0;
 		String val = null;
+		String angleStr = null;
 		Map<String, String> str = this.node.getKeys();
 		if (str.containsKey("angle")||str.containsKey("Angle")||str.containsKey("ANGLE")){
 			String val1 = str.get("angle");
@@ -277,7 +278,18 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			}else {
 				val = val3; 
 			}
-			value = Double.valueOf(val);
+			angleStr = val.trim().toLowerCase();
+			angleStr = angleStr.replaceAll(",", ".");
+		}
+		try{
+			if(val==null){
+				return new Double(value);
+			}
+			else{
+				return new Double(angleStr);
+			}
+		} catch (Exception e) {
+			log.info("Unsupportet height: " + angleStr);
 		}
 		return value;
 	}
@@ -301,6 +313,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 	private double scaleValue(){
 		double value = 0;
 		String val = null;
+		String scaleStr = null;
 		Map<String, String> str = this.node.getKeys();
 		if (str.containsKey("scale")||str.containsKey("Scale")||str.containsKey("SCALE")){
 			String val1 = str.get("scale");
@@ -313,7 +326,18 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			}else {
 				val = val3; 
 			}
-			value = Double.valueOf(val);
+			scaleStr = val.trim().toLowerCase();
+			scaleStr = scaleStr.replaceAll(",", ".");
+		}
+		try{
+			if(val==null){
+				return new Double(value);
+			}
+			else{
+				return new Double(scaleStr);
+			}
+		} catch (Exception e) {
+			log.info("Unsupportet height: " + scaleStr);
 		}
 		return value;
 	}
