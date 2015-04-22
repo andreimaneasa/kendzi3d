@@ -244,11 +244,16 @@ public class SphereIco extends AbstractPointModel implements DLODSuport {
 			}else {
 				val = val3; 
 			}
-			value = Double.valueOf(val);
+
 		}
 		if (value == 0){
 			value = getScale(this.node, this.type, this.metadataCacheService);
 		}
+		if (val.contains(",")){
+			val = val.replace(",", ".");
+		}
+		value = Double.valueOf(val);
+		
 		return value;
 	}
 
@@ -544,7 +549,7 @@ public class SphereIco extends AbstractPointModel implements DLODSuport {
 
 		return height;
 	}
-	
+
 	/**
 	 * Finds scale for sphere. Order of finding is: - node type
 	 * 

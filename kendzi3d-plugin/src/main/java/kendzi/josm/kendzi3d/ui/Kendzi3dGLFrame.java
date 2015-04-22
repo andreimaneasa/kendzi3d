@@ -475,7 +475,7 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		}
 		return input;
 	}
-
+	
 	//A convenience method for creating a MaskFormatter.
 	protected MaskFormatter createFormatter(String s) {
 		MaskFormatter formatter = null;
