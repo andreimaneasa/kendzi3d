@@ -149,8 +149,8 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 	 *            model cache service
 	 */
 	public Cylinder(Node node, Perspective perspective, ModelRender pModelRender, 
-			MetadataCacheService pMetadataCacheService, ModelCacheService pModelCacheService,
-			TextureLibraryStorageService textureLibraryStorageService) {
+			MetadataCacheService pMetadataCacheService, ModelCacheService pModelCacheService
+			) {
 		super(node, perspective);
 
 		this.modelLod = new EnumMap<LOD, Model>(LOD.class);
@@ -161,7 +161,6 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 		this.metadataCacheService = pMetadataCacheService;
 		this.modelCacheService = pModelCacheService;
 
-		this.textureLibraryStorageService = textureLibraryStorageService;
 		this.node = node;
 		this.perspective = perspective;
 	}
@@ -169,7 +168,9 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 	@Override
 	public void buildWorldObject() {
 
+		buildModel(LOD.LOD1);
 		buildModel(LOD.LOD2);
+		buildModel(LOD.LOD3);
 
 		BuildingModel bm = this.bm;
 
@@ -183,19 +184,7 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			this.bm = bm;
 		}
 
-		if (bm != null) {
-
-			BuildingElementsTextureManager tm = new CacheOsmBuildingElementsTextureMenager(
-					this.textureLibraryStorageService);
-
-			BuildingOutput buildModel = BuildingBuilder.buildModel(bm, tm);
-
-			Model model = buildModel.getModel();
-			model.useLight = true;
-
-			this.model = model;
-			this.buildModel = true;
-		}
+//		buildModel = true;
 	}
 	@Override
 	public void buildModel(LOD pLod) {
@@ -594,10 +583,11 @@ public class Cylinder extends AbstractPointModel implements DLODSuport {
 			Material material = pModel.getMaterial(i);
 
 			Color color = parseCylinderColor((OsmPrimitive) node);
+		
 			if (color != null){
 				// get color from Node attibute
 				// 40% color intensity 
-				material.setAmbientDiffuse(new AmbientDiffuseComponent(color, new Color(0.4f, 0.4f, 0.4f, 1.0f)));
+				material.setAmbientDiffuse(new AmbientDiffuseComponent(color, new Color(0.5f, 0.5f, 0.5f, 1.0f)));
 
 			}else{
 				// get color from mtl file 

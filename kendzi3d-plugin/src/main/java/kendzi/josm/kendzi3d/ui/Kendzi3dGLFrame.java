@@ -475,7 +475,7 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		}
 		return input;
 	}
-	
+
 	//A convenience method for creating a MaskFormatter.
 	protected MaskFormatter createFormatter(String s) {
 		MaskFormatter formatter = null;
@@ -595,7 +595,7 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 				selVal = sel;
 			}
 		} catch (NullPointerException e) {
-			log.info("NullPointerException from getOsmPrimitveFromSelectedBuilding() " + e);
+			log.info("NullPointerException" + e);
 		}
 		sel = null;
 		return selVal;
@@ -606,50 +606,19 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 		boolean cond = false;
 
 		DataSet dataset = getDataSet();
-
-		SphereIco sphere;
-		Cylinder cylinder;
-		Cone cone;
 		Collection<OsmPrimitive> sel = new LinkedList<OsmPrimitive>();
-
 		Node nodes = null;
 		Collection<Node> dataSetNode = dataset.getNodes();
 
 		try{
-
 			for (Node node : dataSetNode) {
 				nodes = node;
-
-				if (selection instanceof SphereIco.MyBuildingSelection) {
-					SphereIco.MyBuildingSelection wo = (SphereIco.MyBuildingSelection) selection;
-					SphereIco newB = wo.getNewBuildingInstance();
-
-					sphere = new SphereIco(nodes, newB.getPerspective(),
-							modelRenderInject, metadataCacheService, modelCacheService);
-
-					if (sphere.getNode().getUniqueId() == newB.getNode()
-							.getUniqueId()) {
-						cond = true;
-					}
-
-					if (cond) {
-						OsmPrimitive osmPrimitive = (OsmPrimitive) newB
-								.getNode();
-						sel.add(osmPrimitive);
-					}
-
-					cond = false;
-				}
-
 				if (selection instanceof Cylinder.MyBuildingSelection) {
 
 					Cylinder.MyBuildingSelection wo = (Cylinder.MyBuildingSelection) selection;
 					Cylinder newB = wo.getNewBuildingInstance();
 
-					cylinder = new Cylinder(nodes, newB.getPerspective(),
-							modelRenderInject, metadataCacheService, modelCacheService, textureLibraryStorageService);
-
-					if (cylinder.getNode().getUniqueId() == newB.getNode().getUniqueId()) {
+					if (nodes.getUniqueId() == newB.getNode().getUniqueId()) {
 						cond = true;
 					}
 
@@ -657,18 +626,14 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 						OsmPrimitive osmPrimitive = (OsmPrimitive) newB.getNode();
 						sel.add(osmPrimitive);
 					}
-
 					cond = false;
 				}
 
-				if (selection instanceof Cone.MyBuildingSelection) {
-					Cone.MyBuildingSelection wo = (Cone.MyBuildingSelection) selection;
-					Cone newB = wo.getNewBuildingInstance();
+				if (selection instanceof SphereIco.MyBuildingSelection) {
+					SphereIco.MyBuildingSelection wo = (SphereIco.MyBuildingSelection) selection;
+					SphereIco newB = wo.getNewBuildingInstance();
 
-					cone = new Cone(nodes, newB.getPerspective(),
-							modelRenderInject, metadataCacheService, modelCacheService);
-
-					if (cone.getNode().getUniqueId() == newB.getNode()
+					if (nodes.getUniqueId() == newB.getNode()
 							.getUniqueId()) {
 						cond = true;
 					}
@@ -678,7 +643,23 @@ public class Kendzi3dGLFrame extends Frame implements WindowListener, FpsListene
 								.getNode();
 						sel.add(osmPrimitive);
 					}
+					cond = false;
+				}
 
+				if (selection instanceof Cone.MyBuildingSelection) {
+					Cone.MyBuildingSelection wo = (Cone.MyBuildingSelection) selection;
+					Cone newB = wo.getNewBuildingInstance();
+					
+					if (nodes.getUniqueId() == newB.getNode()
+							.getUniqueId()) {
+						cond = true;
+					}
+
+					if (cond) {
+						OsmPrimitive osmPrimitive = (OsmPrimitive) newB
+								.getNode();
+						sel.add(osmPrimitive);
+					}
 					cond = false;
 				}
 

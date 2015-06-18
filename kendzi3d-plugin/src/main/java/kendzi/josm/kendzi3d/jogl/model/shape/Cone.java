@@ -155,8 +155,10 @@ public class Cone extends AbstractPointModel implements DLODSuport {
 	@Override
 	public void buildWorldObject() {
 
+		buildModel(LOD.LOD1);
 		buildModel(LOD.LOD2);
-
+		buildModel(LOD.LOD3);
+		
 		BuildingModel bm = this.bm;
 
 		if (!this.preview || bm == null) {
@@ -168,7 +170,7 @@ public class Cone extends AbstractPointModel implements DLODSuport {
 			this.preview = false;
 			this.bm = bm;
 		}
-		this.buildModel = true;
+//		this.buildModel = true;
 	}
 
 	@Override

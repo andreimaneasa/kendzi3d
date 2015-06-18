@@ -82,7 +82,7 @@ public class ShapeLayer implements Layer{
 	@Override
 	public WorldObject buildModel(Node pNode, Perspective perspective) {
 		return new Cylinder(pNode, perspective, this.modelRender, this.metadataCacheService,
-				this.modelCacheService, this.textureLibraryStorageService);
+				this.modelCacheService);
 
 	}
 
